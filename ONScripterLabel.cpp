@@ -1071,7 +1071,7 @@ int ONScripterLabel::init()
         if (script_h.save_path == NULL) {
             // Error; assume ancient Windows. In this case it's safe
             // to use the archive path!
-            setSavePath(archive_path.get_path(0));
+            setSavePath(archive_path.get_path_cstr(0));
         }
 #elif defined MACOSX
         // On Mac OS X, place in ~/Library/Application Support/<gameid>/
@@ -1088,11 +1088,11 @@ int ONScripterLabel::init()
                     pwd->pw_dir, DELIMITER, gameid, DELIMITER);
             mkdir(script_h.save_path, 0755);
         }
-        else setSavePath(archive_path.get_path(0));
+        else setSavePath(archive_path.get_path_cstr(0));
 #else
         // Fall back on default ONScripter behaviour if we don't have
         // any better ideas.
-        setSavePath(archive_path.get_path(0));
+        setSavePath(archive_path.get_path_cstr(0));
 #endif
     }
     if ( script_h.game_identifier ) {
@@ -1100,7 +1100,7 @@ int ONScripterLabel::init()
         script_h.game_identifier = NULL; 
     }
 
-    if (strcmp(script_h.save_path, archive_path.get_path(0)) != 0) {
+    if (strcmp(script_h.save_path, archive_path.get_path_cstr(0)) != 0) {
         // insert save_path onto the front of archive_path
         DirPaths new_path = DirPaths(script_h.save_path);
         new_path.add(archive_path);
@@ -1159,7 +1159,7 @@ int ONScripterLabel::init()
         font_file = new char[ archive_path.max_path_len() + strlen(FONT_FILE) + 1 ];
         for (int i=0; i<(archive_path.get_num_paths()); i++) {
             // look through archive_path(s) for the font file
-            sprintf( font_file, "%s%s", archive_path.get_path(i), FONT_FILE );
+            sprintf( font_file, "%s%s", archive_path.get_path_cstr(i), FONT_FILE );
             //printf("font file: %s\n", font_file);
             fp = std::fopen(font_file, "rb");
             if (fp != NULL) {
@@ -1167,7 +1167,7 @@ int ONScripterLabel::init()
                 break;
             }
         }
-        //sprintf( font_file, "%s%s", archive_path->get_path(0), FONT_FILE );
+        //sprintf( font_file, "%s%s", archive_path->get_path_cstr(0), FONT_FILE );
         setStr(&default_font, FONT_FILE);
     }
 

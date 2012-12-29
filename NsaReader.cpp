@@ -82,12 +82,12 @@ int NsaReader::processArchives( const DirPaths &path )
     n = nd = 0;
     while ((i<MAX_EXTRA_ARCHIVE) && (n<archive_path->get_num_paths())) {
         if (j < 0) {
-            sprintf( archive_name, "%s%s.%s", nsa_path->get_path(nd), NSA_ARCHIVE_NAME, nsa_archive_ext );
-            sprintf(archive_name2, "%s%s", archive_path->get_path(n), archive_name);
+            sprintf( archive_name, "%s%s.%s", nsa_path->get_path_cstr(nd), NSA_ARCHIVE_NAME, nsa_archive_ext );
+            sprintf(archive_name2, "%s%s", archive_path->get_path_cstr(n), archive_name);
         } else {
             sprintf( archive_name2, NSA_ARCHIVE_NAME2, j+1 );
-            sprintf( archive_name, "%s%s.%s", nsa_path->get_path(nd), archive_name2, nsa_archive_ext );
-            sprintf(archive_name2, "%s%s", archive_path->get_path(n), archive_name);
+            sprintf( archive_name, "%s%s.%s", nsa_path->get_path_cstr(nd), archive_name2, nsa_archive_ext );
+            sprintf(archive_name2, "%s%s", archive_path->get_path_cstr(n), archive_name);
         }
         fp = std::fopen(archive_name2, "rb");
         if (fp != NULL) {
@@ -118,14 +118,14 @@ int NsaReader::processArchives( const DirPaths &path )
     k = 0;
     n = nd = 0;
     while ((k<MAX_NS2_ARCHIVE) && (n<archive_path->get_num_paths())) {
-        sprintf( archive_name, "%s00.%s", nsa_path->get_path(nd), ns2_archive_ext );
-        sprintf(archive_name2, "%s%s", archive_path->get_path(n), archive_name);
+        sprintf( archive_name, "%s00.%s", nsa_path->get_path_cstr(nd), ns2_archive_ext );
+        sprintf(archive_name2, "%s%s", archive_path->get_path_cstr(n), archive_name);
         fp = std::fopen(archive_name2, "rb");
         if (fp != NULL) {
             fclose(fp);
             for (j=MAX_NS2_ARCHIVE_NUM; (j>=0) && (k<MAX_NS2_ARCHIVE); j--) {
-                sprintf( archive_name, "%s%02d.%s", nsa_path->get_path(nd), j, ns2_archive_ext );
-                sprintf(archive_name2, "%s%s", archive_path->get_path(n), archive_name);
+                sprintf( archive_name, "%s%02d.%s", nsa_path->get_path_cstr(nd), j, ns2_archive_ext );
+                sprintf(archive_name2, "%s%s", archive_path->get_path_cstr(n), archive_name);
                 fp = std::fopen(archive_name2, "rb");
                 if (fp == NULL) {
                     if (j == 0) break;

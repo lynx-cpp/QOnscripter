@@ -144,7 +144,7 @@ FILE *DirectReader::fopen(const char *path, const char *mode)
         file_sub_path = new char[file_path_len];
     }
     for (int n=0; n<archive_path->get_num_paths(); n++) {
-        sprintf( file_full_path, "%s%s", archive_path->get_path(n), path );
+        sprintf( file_full_path, "%s%s", archive_path->get_path_cstr(n), path );
         //printf("filename: \"%s\": ", file_full_path);
         fp = ::fopen( file_full_path, mode );
         //printf("%s\n", fp ? "found" : "not found");
@@ -179,10 +179,10 @@ FILE *DirectReader::fopen(const char *path, const char *mode)
     int n = archive_path->get_num_paths();
     int i=1;
     if (n > 0)
-        len = strlen(archive_path->get_path(0));
+        len = strlen(archive_path->get_path_cstr(0));
     if (len > 0) {
-        dp = opendir(archive_path->get_path(0));
-        sprintf( file_full_path, "%s%s", archive_path->get_path(0), path );
+        dp = opendir(archive_path->get_path_cstr(0));
+        sprintf( file_full_path, "%s%s", archive_path->get_path_cstr(0), path );
     } else {
         dp = opendir(".");
         sprintf( file_full_path, "%s", path );
@@ -193,10 +193,10 @@ FILE *DirectReader::fopen(const char *path, const char *mode)
     while (1){
         if (dp == NULL) {
             if (i < n) {
-                len = strlen(archive_path->get_path(i));
-                dp = opendir(archive_path->get_path(i));
+                len = strlen(archive_path->get_path_cstr(i));
+                dp = opendir(archive_path->get_path_cstr(i));
                 sprintf( file_full_path, "%s%s",
-                        archive_path->get_path(i), path );
+                        archive_path->get_path_cstr(i), path );
                 cur_p = file_full_path+len;
                 i++;
             } else

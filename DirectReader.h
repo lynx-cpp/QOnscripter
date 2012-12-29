@@ -32,7 +32,8 @@
 
 #include "BaseReader.h"
 #include "DirPaths.h"
-#include <string.h>
+#include <cstring>
+#include <string>
 
 #define MAX_FILE_NAME_LENGTH 256
 

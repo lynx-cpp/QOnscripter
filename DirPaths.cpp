@@ -79,7 +79,17 @@ void DirPaths::add( const string &new_paths )
     all_paths += paths.back();
 }
 
-const char* DirPaths::get_path( int n ) const
+const string& DirPaths::get_path( int n ) const
+{
+    return paths[n];
+}
+
+const string& DirPaths::get_all_paths() const
+{
+    return all_paths;
+}
+
+const char* DirPaths::get_path_cstr( int n ) const
 {
     if (0 <= n && n < paths.size())
         return paths[n].c_str();
@@ -88,7 +98,7 @@ const char* DirPaths::get_path( int n ) const
 }
 
 // Returns a delimited string containing all paths
-const char* DirPaths::get_all_paths() const
+const char* DirPaths::get_all_paths_cstr() const
 {
     return all_paths.c_str();
 }

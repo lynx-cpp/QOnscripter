@@ -25,13 +25,9 @@
 #ifndef __DIR_PATHS__
 #define __DIR_PATHS__
 
-#include <cstdio>
-#include <cstdlib>
-#include <cstring>
 #include <iostream>
 #include <string>
 #include <vector>
-//#include <QtCore/QDir>
 
 #ifdef WIN32
 #define DELIMITER '\\'
@@ -50,11 +46,12 @@ public:
     DirPaths& operator =( const DirPaths &dp );
     
     void add( const char *new_paths );
-    void add( char *new_paths ) { add( (const char*)new_paths ); }
     void add( const std::string &new_paths );
     void add( const DirPaths &dp );
-    const char *get_path( int n ) const; //paths numbered from 0 to num_paths-1
-    const char *get_all_paths() const;
+    const std::string& get_path( int n ) const;
+    const std::string& get_all_paths() const;
+    const char *get_path_cstr( int n ) const; //paths numbered from 0 to num_paths-1
+    const char *get_all_paths_cstr() const;
     int get_num_paths() const;
     size_t max_path_len() const;
 

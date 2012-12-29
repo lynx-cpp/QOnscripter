@@ -1122,7 +1122,7 @@ FILE *ScriptParser::fopen( const char *path, const char *mode, const bool save, 
         // search within archive_path dirs
         file_name = new char[archive_path.max_path_len()+strlen(path)+1];
         for (int n=0; n<(archive_path.get_num_paths()); n++) {
-            root = archive_path.get_path(n);
+            root = archive_path.get_path_cstr(n);
             //printf("root: %s\n", root);
             sprintf( file_name, "%s%s", root, path );
             //printf("parser:fopen(\"%s\")\n", file_name);

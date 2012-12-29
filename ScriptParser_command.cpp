@@ -554,7 +554,7 @@ int ScriptParser::nsadirCommand()
 
     delete script_h.cBR;
     script_h.cBR = new NsaReader( archive_path, nsa_offset, key_table );
-    if ( script_h.cBR->open( nsa_path.get_all_paths() ) ){
+    if ( script_h.cBR->open( nsa_path.get_all_paths_cstr() ) ){
         errorAndCont( "nsadir: couldn't open any NSA archives" );
     }
 
@@ -576,7 +576,7 @@ int ScriptParser::nsaCommand()
     
     delete script_h.cBR;
     script_h.cBR = new NsaReader( archive_path, nsa_offset, key_table );
-    if ( script_h.cBR->open( nsa_path.get_all_paths() ) ){
+    if ( script_h.cBR->open( nsa_path.get_all_paths_cstr() ) ){
         errorAndCont( "nsa: couldn't open any NSA archives" );
     }
 
@@ -1569,7 +1569,7 @@ int ScriptParser::addnsadirCommand()
 
     delete script_h.cBR;
     script_h.cBR = new NsaReader( archive_path, nsa_offset, key_table );
-    if ( script_h.cBR->open( nsa_path.get_all_paths() ) ){
+    if ( script_h.cBR->open( nsa_path.get_all_paths_cstr() ) ){
         errorAndCont( "addnsadir: couldn't open any NSA archives" );
     }
 
