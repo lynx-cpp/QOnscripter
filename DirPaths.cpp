@@ -2,6 +2,11 @@
 
 using namespace std;
 
+DirPaths::DirPaths( const string &new_paths )
+{
+    add(new_paths);
+}
+
 DirPaths::DirPaths( const char *new_paths )
 {
     add(new_paths);
@@ -71,7 +76,7 @@ void DirPaths::add( const string &new_paths )
         paths.back().push_back(DELIMITER);
 
     // construct all_paths
-    all_paths = "";
+    all_paths.clear();
     for (int i = 0; i < paths.size() - 1; i++) {
         all_paths += paths[i];
         all_paths.push_back(PATH_DELIMITER);

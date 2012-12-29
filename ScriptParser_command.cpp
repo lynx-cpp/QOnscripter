@@ -219,7 +219,7 @@ int ScriptParser::soundpressplginCommand()
     if (*buf == 0) return RET_CONTINUE;
     
     buf++;
-    script_h.cBR->registerCompressionType( buf, BaseReader::NBZ_COMPRESSION );
+    script_h.cBR->registerCompressionType_cstr( buf, BaseReader::NBZ_COMPRESSION );
 
     return RET_CONTINUE;
 }
@@ -1535,7 +1535,7 @@ int ScriptParser::arcCommand()
     while ( buf2[i] != '|' && buf2[i] != '\0' ) i++;
     buf2[i] = '\0';
 
-    if ( strcmp( script_h.cBR->getArchiveName(), "direct" ) == 0 ){
+    if ( strcmp( script_h.cBR->getArchiveName_cstr(), "direct" ) == 0 ){
         delete script_h.cBR;
         script_h.cBR = new SarReader( archive_path, key_table );
         if ( script_h.cBR->open( buf2 ) ){
@@ -1544,7 +1544,7 @@ int ScriptParser::arcCommand()
             errorAndCont( script_h.errbuf );
         }
     }
-    else if ( strcmp( script_h.cBR->getArchiveName(), "sar" ) == 0 ){
+    else if ( strcmp( script_h.cBR->getArchiveName_cstr(), "sar" ) == 0 ){
         if ( script_h.cBR->open( buf2 ) ){
             snprintf(script_h.errbuf, MAX_ERRBUF_LEN,
                      "arc: couldn't open archive '%s'", buf2);

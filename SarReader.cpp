@@ -34,7 +34,8 @@
 #define WRITE_LENGTH 4096
 
 SarReader::SarReader( DirPaths &path, const unsigned char *key_table )
-        :DirectReader( path, key_table )
+    :DirectReader(path)
+//        :DirectReader( path, key_table )
 {
     root_archive_info = last_archive_info = &archive_info;
     num_of_sar_archives = 0;
@@ -54,8 +55,8 @@ int SarReader::open( const char *name )
         return -1;
     }
 
-    info->file_name = new char[strlen(name)+1];
-    memcpy(info->file_name, name, strlen(name)+1);
+    info->file_name_cstr = new char[strlen(name)+1];
+    memcpy(info->file_name_cstr, name, strlen(name)+1);
     
     readArchive( info );
 
@@ -134,10 +135,12 @@ int SarReader::readArchive( struct ArchiveInfo *ai, int archive_type, int offset
         // there's an extra byte at the end of the header, not sure what for
         while (cur_offset < ai->base_offset){
             //skip the beginning double-quote
-            unsigned char ch = key_table[fgetc( ai->file_handle )];
+            unsigned char ch = fgetc(ai->file_handle);
+//            unsigned char ch = key_table[fgetc( ai->file_handle )];
             cur_offset++;
             do cur_offset++;
-            while( (ch = key_table[fgetc( ai->file_handle )] ) != '"' );
+            while ((ch = fgetc(ai->file_handle)) != '"');
+//            while( (ch = key_table[fgetc( ai->file_handle )] ) != '"' );
             i = readLong( ai->file_handle );
             cur_offset += 4;
             ai->num_of_files++;
@@ -150,18 +153,20 @@ int SarReader::readArchive( struct ArchiveInfo *ai, int archive_type, int offset
         for ( i=0 ; i<ai->num_of_files ; i++ ){
             unsigned int count = 0;
             //skip the beginning double-quote
-            unsigned char ch = key_table[fgetc( ai->file_handle )];
+            unsigned char ch = fgetc(ai->file_handle);
+//            unsigned char ch = key_table[fgetc( ai->file_handle )];
             //error if _not_ a double-quote
             if (ch != '"') {
                 fprintf(stderr, "file does not seem to be a valid NS2 archive\n");
                 return -1;
             }
-            while( (ch = key_table[fgetc( ai->file_handle )] ) != '"' ){
+            while((ch = fgetc( ai->file_handle )) != '"'){
+//            while( (ch = key_table[fgetc( ai->file_handle )] ) != '"' ){
                 if ( 'a' <= ch && ch <= 'z' ) ch += 'A' - 'a';
-                ai->fi_list[i].name[count++] = ch;
+                ai->fi_list[i].name_cstr[count++] = ch;
             }
-            ai->fi_list[i].name[count] = '\0';
-            ai->fi_list[i].compression_type = getRegisteredCompressionType( ai->fi_list[i].name );
+            ai->fi_list[i].name_cstr[count] = '\0';
+            ai->fi_list[i].compression_type = getRegisteredCompressionType( ai->fi_list[i].name_cstr );
             ai->fi_list[i].offset = cur_offset;
             ai->fi_list[i].length = swapLong( readLong( ai->file_handle ) );
             ai->fi_list[i].original_length = ai->fi_list[i].length;
@@ -181,15 +186,16 @@ int SarReader::readArchive( struct ArchiveInfo *ai, int archive_type, int offset
             unsigned char ch;
             int count = 0;
 
-            while( (ch = key_table[fgetc( ai->file_handle )] ) ){
+            while( (ch = fgetc( ai->file_handle ) ) ){
+//            while( (ch = key_table[fgetc( ai->file_handle )] ) ){
                 if ( 'a' <= ch && ch <= 'z' ) ch += 'A' - 'a';
-                ai->fi_list[i].name[count++] = ch;
+                ai->fi_list[i].name_cstr[count++] = ch;
             }
-            ai->fi_list[i].name[count] = ch;
+            ai->fi_list[i].name_cstr[count] = ch;
 
             if ( archive_type == ARCHIVE_TYPE_NSA )
                 ai->fi_list[i].compression_type = readChar( ai->file_handle );
-            else if (strstr( ai->fi_list[i].name, ".nbz" ) != NULL || strstr( ai->fi_list[i].name, ".NBZ" ) != NULL  )
+            else if (strstr( ai->fi_list[i].name_cstr, ".nbz" ) != NULL || strstr( ai->fi_list[i].name_cstr, ".NBZ" ) != NULL  )
                 ai->fi_list[i].compression_type = NBZ_COMPRESSION;
             else
                 ai->fi_list[i].compression_type = NO_COMPRESSION;
@@ -205,7 +211,7 @@ int SarReader::readArchive( struct ArchiveInfo *ai, int archive_type, int offset
 
             /* Registered Plugin check */
             if ( ai->fi_list[i].compression_type == NO_COMPRESSION )
-                ai->fi_list[i].compression_type = getRegisteredCompressionType( ai->fi_list[i].name );
+                ai->fi_list[i].compression_type = getRegisteredCompressionType( ai->fi_list[i].name_cstr );
 
             //Mion: delaying checking decompressed file length until
             // file is opened for real: original_length = 0 means
@@ -243,17 +249,17 @@ int SarReader::writeHeaderSub( ArchiveInfo *ai, FILE *fp, int archive_type, int 
         if ( archive_type == ARCHIVE_TYPE_NS2 )
             fputc( '"', fp );
 
-        for ( j=0 ; ai->fi_list[i].name[j] ; j++ ){
-            if ((ai->fi_list[i].name[j] >= 'A') &&
-                (ai->fi_list[i].name[j] <= 'Z'))
-                fputc( ai->fi_list[i].name[j] - 'A' + 'a', fp );
+        for ( j=0 ; ai->fi_list[i].name_cstr[j] ; j++ ){
+            if ((ai->fi_list[i].name_cstr[j] >= 'A') &&
+                (ai->fi_list[i].name_cstr[j] <= 'Z'))
+                fputc( ai->fi_list[i].name_cstr[j] - 'A' + 'a', fp );
             else
-                fputc( ai->fi_list[i].name[j], fp );
+                fputc( ai->fi_list[i].name_cstr[j], fp );
         }
         if ( archive_type == ARCHIVE_TYPE_NS2 )
             fputc( '"', fp );
         else
-            fputc( ai->fi_list[i].name[j], fp );
+            fputc( ai->fi_list[i].name_cstr[j], fp );
 
         if ( archive_type == ARCHIVE_TYPE_NSA )
             writeChar( fp, ai->fi_list[i].compression_type );
@@ -388,7 +394,7 @@ int SarReader::close()
     return 0;
 }
 
-const char *SarReader::getArchiveName() const
+const char *SarReader::getArchiveName_cstr() const
 {
     return "sar";
 }
@@ -411,25 +417,26 @@ int SarReader::getIndexFromFile( ArchiveInfo *ai, const char *file_name )
 
     len = strlen( file_name );
     if ( len > MAX_FILE_NAME_LENGTH ) len = MAX_FILE_NAME_LENGTH;
-    memcpy( capital_name, file_name, len );
-    capital_name[ len ] = '\0';
+    capital_name = file_name;
+//    memcpy( capital_name, file_name, len );
+//    capital_name[ len ] = '\0';
 
     for ( i=0 ; i<len ; i++ ){
         if ( 'a' <= capital_name[i] && capital_name[i] <= 'z' ) capital_name[i] += 'A' - 'a';
         else if ( capital_name[i] == '/' ) capital_name[i] = '\\';
     }
     for ( i=0 ; i<ai->num_of_files ; i++ ){
-        if ( !strcmp( capital_name, ai->fi_list[i].name ) ) break;
+        if ( !strcmp( capital_name.c_str(), ai->fi_list[i].name_cstr ) ) break;
     }
 
     return i;
 }
 
-size_t SarReader::getFileLength( const char *file_name )
+size_t SarReader::getFileLength_cstr( const char *file_name )
 {
 #ifndef TOOLS_BUILD
     size_t ret;
-    if ( ( ret = DirectReader::getFileLength( file_name ) ) ) return ret;
+    if ( ( ret = DirectReader::getFileLength_cstr( file_name ) ) ) return ret;
 #endif
     ArchiveInfo *info = archive_info.next;
     unsigned int j = 0;
@@ -474,14 +481,14 @@ size_t SarReader::getFileSub( ArchiveInfo *ai, const char *file_name, unsigned c
 
     fseek( ai->file_handle, ai->fi_list[i].offset, SEEK_SET );
     size_t ret = fread( buf, 1, ai->fi_list[i].length, ai->file_handle );
-    for (size_t j=0 ; j<ret ; j++) buf[j] = key_table[buf[j]];
+//    for (size_t j=0 ; j<ret ; j++) buf[j] = key_table[buf[j]];
     return ret;
 }
 
-size_t SarReader::getFile( const char *file_name, unsigned char *buf, int *location )
+size_t SarReader::getFile_cstr( const char *file_name, unsigned char *buf, int *location )
 {
     size_t ret;
-    if ( ( ret = DirectReader::getFile( file_name, buf, location ) ) ) return ret;
+    if ( ( ret = DirectReader::getFile_cstr( file_name, buf, location ) ) ) return ret;
 
     ArchiveInfo *info = archive_info.next;
     size_t j = 0;

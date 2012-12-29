@@ -1,35 +1,9 @@
-/* -*- C++ -*-
- *
- *  BaseReader.h - Base class of archive reader
- *
- *  Copyright (c) 2001-2010 Ogapee. All rights reserved.
- *  (original ONScripter, of which this is a fork).
- *
- *  ogapee@aqua.dti2.ne.jp
- *
- *  Copyright (c) 2009-2010 "Uncle" Mion Sonozaki
- *
- *  UncleMion@gmail.com
- *
- *  This program is free software; you can redistribute it and/or modify
- *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation; either version 2 of the License, or
- *  (at your option) any later version.
- *
- *  This program is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU General Public License for more details.
- *
- *  You should have received a copy of the GNU General Public License
- *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
- */
-
 #ifndef __BASE_READER_H__
 #define __BASE_READER_H__
 
-#include <stdio.h>
+#include <cstdio>
+#include <iostream>
+#include <string>
 
 #ifndef SEEK_END
 #define SEEK_END 2
@@ -60,33 +34,37 @@ struct BaseReader
     };
 
     struct FileInfo{
-        char name[256];
+        std::string name;
+        char name_cstr[256];
         int  compression_type;
         size_t offset;
         size_t length;
         size_t original_length;
         FileInfo()
         : compression_type(NO_COMPRESSION),
-          offset(0), length(0), original_length(0)
-        {}
+          offset(0), length(0), original_length(0) {
+            for (int i = 0; i < 256; i++)
+                name_cstr[i] = '\0';
+          }
     };
 
     struct ArchiveInfo{
         struct ArchiveInfo *next;
         FILE *file_handle;
         int power_resume_number; // currently only for PSP
-        char *file_name; //assumed to use SJIS encoding
+        std::string file_name;
+        char *file_name_cstr; //assumed to use SJIS encoding
         struct FileInfo *fi_list;
         unsigned int num_of_files;
         unsigned long base_offset;
 
         ArchiveInfo()
-        : next(NULL), file_handle(NULL), file_name(NULL),
+        : next(NULL), file_handle(NULL), file_name_cstr(NULL),
           fi_list(NULL), num_of_files(0), base_offset(0)
         {}
         ~ArchiveInfo(){
             if (file_handle) fclose( file_handle );
-            if (file_name) delete[] file_name;
+            if (file_name_cstr) delete[] file_name_cstr;
             if (fi_list) delete[] fi_list;
         }
     };
@@ -96,16 +74,21 @@ struct BaseReader
     virtual ~BaseReader(){};
     
     virtual int open( const char *name=NULL ) = 0;
+    virtual int open( const std::string &name ) = 0;
     virtual int close() = 0;
     
-    virtual const char *getArchiveName() const = 0;
+    virtual const std::string getArchiveName() const = 0;
+    virtual const char *getArchiveName_cstr() const = 0;
     virtual int  getNumFiles() = 0;
-    virtual void registerCompressionType( const char *ext, int type ) = 0;
+    virtual void registerCompressionType(const std::string &ext, int type) = 0;
+    virtual void registerCompressionType_cstr( const char *ext, int type ) = 0;
 
     virtual struct FileInfo getFileByIndex( unsigned int index ) = 0;
     //file_name parameter is assumed to use SJIS encoding
-    virtual size_t getFileLength( const char *file_name ) = 0;
-    virtual size_t getFile( const char *file_name, unsigned char *buffer, int *location=NULL ) = 0;
+    virtual size_t getFileLength(const std::string &file_name) = 0;
+    virtual size_t getFileLength_cstr( const char *file_name ) = 0;
+    virtual size_t getFile(const std::string &file_name, unsigned char *buffer, int *location = NULL) = 0;
+    virtual size_t getFile_cstr( const char *file_name, unsigned char *buffer, int *location=NULL ) = 0;
 };
 
 #endif // __BASE_READER_H__

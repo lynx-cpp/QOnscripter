@@ -47,11 +47,11 @@ public:
     int open( const char *nsa_path=NULL );
     int processArchives( const DirPaths &path );
 #endif
-    const char *getArchiveName() const;
+    const char *getArchiveName_cstr() const;
     int getNumFiles();
     
-    size_t getFileLength( const char *file_name );
-    size_t getFile( const char *file_name, unsigned char *buf, int *location=NULL );
+    size_t getFileLength_cstr( const char *file_name );
+    size_t getFile_cstr( const char *file_name, unsigned char *buf, int *location=NULL );
     struct FileInfo getFileByIndex( unsigned int index );
 
 #ifdef TOOLS_BUILD

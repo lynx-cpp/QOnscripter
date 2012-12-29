@@ -194,7 +194,7 @@ SDL_Surface *ONScripterLabel::createRectangleSurface(char *filename)
 SDL_Surface *ONScripterLabel::createSurfaceFromFile(char *filename, int *location)
 {
     char* alt_buffer = 0;
-    unsigned long length = script_h.cBR->getFileLength( filename );
+    unsigned long length = script_h.cBR->getFileLength_cstr( filename );
 
     if (length == 0) {
         alt_buffer = new char[strlen(filename) + strlen(script_h.save_path) + 1];
@@ -253,7 +253,7 @@ SDL_Surface *ONScripterLabel::createSurfaceFromFile(char *filename, int *locatio
     }
 
     if (!alt_buffer) {
-        script_h.cBR->getFile( filename, buffer, location );
+        script_h.cBR->getFile_cstr( filename, buffer, location );
     }
     else {
         FILE* fp;

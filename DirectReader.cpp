@@ -1,57 +1,7 @@
-//$Id:$ -*- C++ -*-
-/*
- *  DirectReader.cpp - Reader from independent files for ONScripter-EN
- *
- *  Copyright (c) 2001-2010 Ogapee. All rights reserved.
- *  (original ONScripter, of which this is a fork).
- *
- *  ogapee@aqua.dti2.ne.jp
- *
- *  Copyright (c) 2007-2010 "Uncle" Mion Sonozaki
- *
- *  UncleMion@gmail.com
- *
- *  This program is free software; you can redistribute it and/or modify
- *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation; either version 2 of the License, or
- *  (at your option) any later version.
- *
- *  This program is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU General Public License for more details.
- *
- *  You should have received a copy of the GNU General Public License
- *  along with this program; if not, see <http://www.gnu.org/licenses/>
- *  or write to the Free Software Foundation, Inc.,
- *  59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
- */
-
-// Modified by Mion, December 2009, to support creating new archives
-// via nsamake
-
 #include "DirectReader.h"
 #include <bzlib.h>
 #if !defined(WIN32) && !defined(MACOS9) && !defined(PSP) && !defined(__OS2__)
 #include <dirent.h>
-#endif
-
-#define IS_TWO_BYTE(x) \
-        ( ((x) & 0xe0) == 0xe0 || ((x) & 0xe0) == 0x80 )
-
-#ifdef WIN32
-//Mion: support for non-ASCII (SJIS) filenames
-#include <wchar.h>
-#endif
-
-#if defined(MACOSX) || defined(LINUX) || defined(UTF8_FILESYSTEM)
-#define RECODING_FILENAMES
-#ifdef MACOSX
-#include "cocoa_encoding.h"
-#else //!MACOSX
-extern unsigned short convSJIS2UTF16( unsigned short in );
-extern int convUTF16ToUTF8( unsigned char dst[4], unsigned short src );
-#endif
 #endif
 
 #ifndef SEEK_END
@@ -67,26 +17,11 @@ extern int convUTF16ToUTF8( unsigned char dst[4], unsigned short src );
 #define N (1 << EI)  /* buffer size */
 #define F ((1 << EJ) + P)  /* lookahead buffer size */
 
-DirectReader::DirectReader( DirPaths &path, const unsigned char *key_table )
+using namespace std;
+
+DirectReader::DirectReader(DirPaths &path)
 {
-    file_full_path = NULL;
-    file_sub_path = NULL;
-    file_path_len = 0;
-
-    capital_name = new char[MAX_FILE_NAME_LENGTH*2+1];
-    capital_name_tmp = new char[MAX_FILE_NAME_LENGTH*3+1];
-
     archive_path = &path;
-
-    int i;
-    if (key_table){
-        key_table_flag = true;
-        for (i=0 ; i<256 ; i++) this->key_table[i] = key_table[i];
-    }
-    else{
-        key_table_flag = false;
-        for (i=0 ; i<256 ; i++) this->key_table[i] = (unsigned char) i;
-    }
 
     read_buf = new unsigned char[READ_LENGTH];
     decomp_buffer = new unsigned char[N*2];
@@ -101,11 +36,6 @@ DirectReader::DirectReader( DirPaths &path, const unsigned char *key_table )
 
 DirectReader::~DirectReader()
 {
-    if (file_full_path) delete[] file_full_path;
-    if (file_sub_path)  delete[] file_sub_path;
-    delete[] capital_name;
-    delete[] capital_name_tmp;
-
     delete[] read_buf;
     delete[] decomp_buffer;
     
@@ -120,124 +50,27 @@ DirectReader::~DirectReader()
 bool hasTwoByteChar(const char *str)
 {
     const char *ptr = str;
-    while (*ptr != 0) {
-        if (IS_TWO_BYTE(*ptr) )
-            return true;
+    while (*ptr != 0)
         ptr++;
-    }
     return false;
 }
 
 FILE *DirectReader::fopen(const char *path, const char *mode)
 {
+    return fopen(string(path), string(mode));
+}
+
+FILE *DirectReader::fopen(const string &path, const string &mode)
+{
     //NOTE: path is likely SJIS, but if called by getFileHandle on
     //      a non-Windows system, it could be UTF-8 or EUC-JP
     FILE *fp = NULL;
 
-    size_t len = archive_path->max_path_len() + strlen(path) + 1;
-
-    if (file_path_len < len){
-        file_path_len = len;
-        if (file_full_path) delete[] file_full_path;
-        file_full_path = new char[file_path_len];
-        if (file_sub_path) delete[] file_sub_path;
-        file_sub_path = new char[file_path_len];
-    }
     for (int n=0; n<archive_path->get_num_paths(); n++) {
-        sprintf( file_full_path, "%s%s", archive_path->get_path_cstr(n), path );
-        //printf("filename: \"%s\": ", file_full_path);
-        fp = ::fopen( file_full_path, mode );
-        //printf("%s\n", fp ? "found" : "not found");
+        file_full_path = archive_path->get_path(n) + path;
+        fp = ::fopen( file_full_path.c_str(), mode.c_str() );
         if (fp) return fp;
-#ifdef WIN32
-        // Windows uses UTF-16, so convert for Japanese characters
-        else if (hasTwoByteChar(file_full_path)) {
-            wchar_t *u16_tmp, *umode;
-            //convert the file path to from Shift-JIS to Wide chars (Unicode)
-            int wc_size = MultiByteToWideChar(932, 0, file_full_path, -1, NULL, 0);
-            u16_tmp = new wchar_t[wc_size];
-            MultiByteToWideChar(932, 0, file_full_path, -1, u16_tmp, wc_size);
-            //need to convert the file mode too
-            wc_size = MultiByteToWideChar(932, 0, mode, -1, NULL, 0);
-            umode = new wchar_t[wc_size];
-            MultiByteToWideChar(932, 0, mode, -1, umode, wc_size);
-            fp = _wfopen( u16_tmp, umode );
-            //printf("checking utf16 filename: %s\n", fp ? "found" : "not found");
-            delete[] u16_tmp;
-            delete[] umode;
-            if (fp) return fp;
-        }
-#endif
     }
-
-#if !defined(WIN32) && !defined(MACOS9) && !defined(PSP) && !defined(__OS2__)
-    // If the file wasn't found, try a case-insensitive search.
-    char *cur_p = NULL;
-    DIR *dp = NULL;
-    
-    len = 0;
-    int n = archive_path->get_num_paths();
-    int i=1;
-    if (n > 0)
-        len = strlen(archive_path->get_path_cstr(0));
-    if (len > 0) {
-        dp = opendir(archive_path->get_path_cstr(0));
-        sprintf( file_full_path, "%s%s", archive_path->get_path_cstr(0), path );
-    } else {
-        dp = opendir(".");
-        sprintf( file_full_path, "%s", path );
-    }
-    cur_p = file_full_path+len;
-
-    struct dirent *entp = NULL;
-    while (1){
-        if (dp == NULL) {
-            if (i < n) {
-                len = strlen(archive_path->get_path_cstr(i));
-                dp = opendir(archive_path->get_path_cstr(i));
-                sprintf( file_full_path, "%s%s",
-                        archive_path->get_path_cstr(i), path );
-                cur_p = file_full_path+len;
-                i++;
-            } else
-                return NULL;
-        }
-        if (dp == NULL) continue;
-
-        char *delim_p = NULL;
-        while(1){
-            delim_p = strchr( cur_p, (char)DELIMITER );
-            if (delim_p != cur_p) break;
-            cur_p++;
-        }
-        
-        if (delim_p) len = delim_p - cur_p;
-        else         len = strlen(cur_p);
-        memcpy(file_sub_path, cur_p, len);
-        file_sub_path[len] = '\0';
-        
-        while ( (entp = readdir(dp)) != NULL ){
-            if ( !strcasecmp( file_sub_path, entp->d_name ) ){
-                memcpy(cur_p, entp->d_name, len);
-                break;
-            }
-        }
-        closedir( dp );
-        dp = NULL;
-
-        if (entp == NULL) continue;
-        if (delim_p == NULL) break;
-
-        memcpy(file_sub_path, file_full_path, delim_p-file_full_path);
-        file_sub_path[delim_p-file_full_path]='\0';
-        dp = opendir(file_sub_path);
-
-        cur_p = delim_p+1;
-    }
-    if (entp == NULL) return NULL;
-
-    fp = ::fopen( file_full_path, mode );
-#endif
 
     return fp;
 }
@@ -245,10 +78,7 @@ FILE *DirectReader::fopen(const char *path, const char *mode)
 unsigned char DirectReader::readChar( FILE *fp )
 {
     unsigned char ret = 0;
-    
-    if (fread( &ret, 1, 1, fp ) == 1)
-        ret = key_table[ret];
-
+    fread(&ret, 1, 1, fp);
     return ret;
 }
 
@@ -258,7 +88,7 @@ unsigned short DirectReader::readShort( FILE *fp )
     unsigned char buf[2];
     
     if (fread( &buf, 2, 1, fp ) == 1)
-        ret = key_table[buf[0]] << 8 | key_table[buf[1]];
+        ret = buf[0] << 8 | buf[1];
 
     return ret;
 }
@@ -269,10 +99,10 @@ unsigned long DirectReader::readLong( FILE *fp )
     unsigned char buf[4];
 
     if (fread( &buf, 4, 1, fp ) == 1) {
-        ret = key_table[buf[0]];
-        ret = ret << 8 | key_table[buf[1]];
-        ret = ret << 8 | key_table[buf[2]];
-        ret = ret << 8 | key_table[buf[3]];
+        ret = buf[0];
+        ret = ret << 8 | buf[1];
+        ret = ret << 8 | buf[2];
+        ret = ret << 8 | buf[3];
     }
 
     return ret;
@@ -317,6 +147,11 @@ unsigned long DirectReader::swapLong( unsigned long ch )
            ((ch & 0x0000ff00) << 8) | ((ch & 0x000000ff) << 24);
 }
 
+int DirectReader::open( const string &name )
+{
+    return 0;
+}
+
 int DirectReader::open( const char *name )
 {
     return 0;
@@ -327,8 +162,13 @@ int DirectReader::close()
     return 0;
 }
 
+const string DirectReader::getArchiveName() const
+{
+    string archiveName = "direct";
+    return archiveName;
+}
 
-const char *DirectReader::getArchiveName() const
+const char *DirectReader::getArchiveName_cstr() const
 {
     return "direct";
 }
@@ -338,7 +178,12 @@ int DirectReader::getNumFiles()
     return 0;
 }
     
-void DirectReader::registerCompressionType( const char *ext, int type )
+void DirectReader::registerCompressionType_cstr( const char *ext, int type )
+{
+    registerCompressionType(string(ext), type);
+}
+
+void DirectReader::registerCompressionType(const string &ext, int type)
 {
     last_registered_compression_type->next = new RegisteredCompressionType(ext, type);
     last_registered_compression_type = last_registered_compression_type->next;
@@ -346,19 +191,22 @@ void DirectReader::registerCompressionType( const char *ext, int type )
     
 int DirectReader::getRegisteredCompressionType( const char *file_name )
 {
-    const char *ext_buf = file_name + strlen(file_name);
-    while( *ext_buf != '.' && ext_buf != file_name ) ext_buf--;
+    getRegisteredCompressionType(string(file_name));
+}
+
+int DirectReader::getRegisteredCompressionType(const string &file_name)
+{
+    int ext_buf = file_name.length() - 1;
+    while (ext_buf >= 0 && file_name[ext_buf] != '.') ext_buf--;
     ext_buf++;
     
-    strcpy( capital_name, ext_buf );
-    for ( unsigned int i=0 ; i<strlen(ext_buf)+1 ; i++ )
-        if ( capital_name[i] >= 'a' && capital_name[i] <= 'z' )
-            capital_name[i] += 'A' - 'a';
+    capital_name = string(file_name, ext_buf);
+    for (int i = 0; i < capital_name.size(); i++)
+        capital_name[i] = toupper(capital_name[i]);
     
     RegisteredCompressionType *reg = root_registered_compression_type.next;
     while (reg){
-        if ( !strcmp( capital_name, reg->ext ) ) return reg->type;
-
+        if (capital_name != reg->ext) return reg->type;
         reg = reg->next;
     }
 
@@ -368,60 +216,32 @@ int DirectReader::getRegisteredCompressionType( const char *file_name )
 struct DirectReader::FileInfo DirectReader::getFileByIndex( unsigned int index )
 {
     DirectReader::FileInfo fi;
-    memset(&fi, 0, sizeof(DirectReader::FileInfo));
     return fi;
 }
 
 FILE *DirectReader::getFileHandle( const char *file_name, int &compression_type, size_t *length )
 {
+    return getFileHandle(string(file_name), compression_type, length);
+}
+
+FILE *DirectReader::getFileHandle(const string &file_name, int &compression_type, size_t *length)
+{
     //NOTE: file_name is assumed to use SJIS encoding
     FILE *fp = NULL;
-    unsigned int i;
 
     compression_type = NO_COMPRESSION;
-    size_t len = strlen( file_name );
-    if ( len > MAX_FILE_NAME_LENGTH ) len = MAX_FILE_NAME_LENGTH;
-    memcpy( capital_name, file_name, len );
-    capital_name[ len ] = '\0';
-//Mion: need to do more careful SJIS checking in this next part
+    capital_name = file_name;
     bool has_nonascii = false;
-    for ( i=0 ; i<len ; i++ ){
+    for (int i = 0; i < capital_name.length(); i++) {
         if ((unsigned char)capital_name[i] >= 0x80)
             has_nonascii = true;
-        if (IS_TWO_BYTE(capital_name[i])) {
-            i++;
-        } else if ( capital_name[i] == '/' || capital_name[i] == '\\' )
+        if ( capital_name[i] == '/' || capital_name[i] == '\\' )
             capital_name[i] = (char)DELIMITER;
     }
 
-#ifdef RECODING_FILENAMES
-    // First try Shift_JIS, if we need to
-    if (has_nonascii && !(fp = fopen(capital_name, "rb"))) {
-        // Try UTF-8
-        convertFromSJISToUTF8(capital_name_tmp, capital_name);
-        if ((fp = fopen(capital_name_tmp, "rb"))) {
-            strcpy(capital_name, capital_name_tmp);
-            len = strlen(capital_name);
-        }
-#ifdef LINUX
-        else {
-            // Try EUC-JP
-            convertFromSJISToEUC(capital_name);
-            if ((fp = fopen(capital_name, "rb"))) {
-                len = strlen(capital_name);
-            } else {
-                //fprintf(stderr, "Warning: couldn't access %s even after "
-                //    "transcoding the filename.\n", file_name);
-            }
-        }
-#endif
-    }
-    if (fp) fclose(fp);
-#endif
-    
     *length = 0;
-    if ( ((fp = fopen( capital_name, "rb" )) != NULL) && (len >= 3) ){
-        compression_type = getRegisteredCompressionType( capital_name );
+    if ( ((fp = fopen( capital_name, "rb" )) != NULL) && (file_name.length() >= 3) ){
+        compression_type = getRegisteredCompressionType( capital_name);
         if ( compression_type == NBZ_COMPRESSION || compression_type == SPB_COMPRESSION ){
             *length = getDecompressedFileLength( compression_type, fp, 0 );
         }
@@ -434,7 +254,12 @@ FILE *DirectReader::getFileHandle( const char *file_name, int &compression_type,
     return fp;
 }
 
-size_t DirectReader::getFileLength( const char *file_name )
+size_t DirectReader::getFileLength_cstr( const char *file_name )
+{
+    return getFileLength(string(file_name));
+}
+
+size_t DirectReader::getFileLength(const string &file_name)
 {
     int compression_type;
     size_t len;
@@ -445,8 +270,13 @@ size_t DirectReader::getFileLength( const char *file_name )
     return len;
 }
 
-size_t DirectReader::getFile( const char *file_name, unsigned char *buffer,
+size_t DirectReader::getFile_cstr( const char *file_name, unsigned char *buffer,
                               int *location )
+{
+    return getFile(string(file_name), buffer, location);
+}
+
+size_t DirectReader::getFile(const string &file_name, unsigned char *buffer, int *location)
 {
     int compression_type;
     size_t len, c, total = 0;
@@ -467,7 +297,7 @@ size_t DirectReader::getFile( const char *file_name, unsigned char *buffer,
             len -= c;
             if (fread( buffer, 1, c, fp ) < c) {
                 if (ferror( fp ))
-                    fprintf(stderr, "Error reading %s\n", file_name);
+                    fprintf(stderr, "Error reading %s\n", file_name.c_str());
             }
             buffer += c;
         }
@@ -508,47 +338,10 @@ void DirectReader::convertFromSJISToEUC( char *buf )
     }
 }
 
-void DirectReader::convertFromSJISToUTF8( char *dst_buf, char *src_buf )
-{
-#if defined(RECODING_FILENAMES) || defined(UTF8_FILESYSTEM)
-#if defined(MACOSX)
-    ONSCocoa::sjis_to_utf8(dst_buf, src_buf);
-#else
-    //Mion: ogapee 20100711a
-    int i, c;
-    unsigned short unicode;
-    unsigned char utf8_buf[4];
-    
-    while(*src_buf){
-        if (IS_TWO_BYTE(*src_buf)){
-            unsigned short index = *(unsigned char*)src_buf++;
-            index = index << 8 | (*(unsigned char*)src_buf++);
-            unicode = convSJIS2UTF16( index );
-            c = convUTF16ToUTF8(utf8_buf, unicode);
-            for (i=0 ; i<c ; i++)
-                *dst_buf++ = utf8_buf[i];
-        }
-        else{
-            *dst_buf++ = *src_buf++;
-        }
-    }
-    *dst_buf++ = 0;
-#endif //MACOSX
-#elif defined(WIN32)
-    int wc_size = MultiByteToWideChar(932, 0, src_buf, -1, NULL, 0);
-    wchar_t *u16_tmp = new wchar_t[wc_size];
-    MultiByteToWideChar(932, 0, src_buf, -1, u16_tmp, wc_size);
-    int mb_size = WideCharToMultiByte(CP_UTF8, 0, u16_tmp, wc_size, dst_buf, 0, NULL, NULL);
-    WideCharToMultiByte(CP_UTF8, 0, u16_tmp, wc_size, dst_buf, mb_size, NULL, NULL);
-    delete[] u16_tmp;
-#endif //RECODING_FILENAMES || UTF8_FILESYSTEM, WIN32
-}
+void DirectReader::convertFromSJISToUTF8( char *dst_buf, char *src_buf ) { }
 
 size_t DirectReader::decodeNBZ( FILE *fp, size_t offset, unsigned char *buf )
 {
-    if (key_table_flag)
-        fprintf(stderr, "may not decode NBZ with key_table enabled.\n");
-    
     unsigned int original_length, count;
 	BZFILE *bfp;
 	void *unused;
@@ -617,7 +410,7 @@ int DirectReader::getbit( FILE *fp, int n )
                 getbit_count = 0;
             }
 
-            getbit_buf = key_table[read_buf[getbit_count++]];
+            getbit_buf = read_buf[getbit_count++];
             getbit_mask = 128;
         }
         x <<= 1;
@@ -647,7 +440,8 @@ size_t DirectReader::decodeSPB( FILE *fp, size_t offset, unsigned char *buf )
 
     /* ---------------------------------------- */
     /* Write header */
-    memset( buf, 0, 54 );
+    for (int i = 0; i < 54; i++)
+        buf[i] = 0;
     buf[0] = 'B'; buf[1] = 'M';
     buf[2] = total_size & 0xff;
     buf[3] = (total_size >>  8) & 0xff;
@@ -730,7 +524,8 @@ size_t DirectReader::decodeLZSS( struct ArchiveInfo *ai, int no, unsigned char *
     getbit_len = getbit_count = 0;
 
     fseek( ai->file_handle, ai->fi_list[no].offset, SEEK_SET );
-    memset( decomp_buffer, 0, N-F );
+    for (int i = 0; i < N-F; i++)
+        decomp_buffer[i] = 0;
     r = N - F;
 
     while ( count < ai->fi_list[no].original_length ){

@@ -561,13 +561,13 @@ static void setStr( char **dst, const char *src, int num=-1 )
 static SDL_Surface *loadImage( char *file_name, bool *has_alpha, SDL_Surface *surface, BaseReader *br )
 {
     if ( !file_name ) return NULL;
-    unsigned long length = br->getFileLength( file_name );
+    unsigned long length = br->getFileLength_cstr( file_name );
 
     if ( length == 0 )
         return NULL;
     unsigned char *buffer = new unsigned char[length];
     int location;
-    br->getFile( file_name, buffer, &location );
+    br->getFile_cstr( file_name, buffer, &location );
     SDL_Surface *tmp = IMG_Load_RW(SDL_RWFromMem( buffer, length ), 1);
 
     char *ext = strrchr(file_name, '.');

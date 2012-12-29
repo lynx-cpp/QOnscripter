@@ -206,7 +206,7 @@ int ONScripterLabel::playSound(const char *filename, int format, bool loop_flag,
 {
     if ( !audio_open_flag ) return SOUND_NONE;
 
-    long length = script_h.cBR->getFileLength( filename );
+    long length = script_h.cBR->getFileLength_cstr( filename );
     if (length == 0) return SOUND_NONE;
 
     //Mion: account for mode_wave_demo setting
@@ -235,7 +235,7 @@ int ONScripterLabel::playSound(const char *filename, int format, bool loop_flag,
             errorAndCont( script_h.errbuf, "unable to allocate buffer", "Memory Issue" );
             return SOUND_NONE;
         }
-        script_h.cBR->getFile( filename, buffer );
+        script_h.cBR->getFile_cstr( filename, buffer );
     }
 
     if (format & (SOUND_OGG | SOUND_OGG_STREAMING)){
@@ -268,12 +268,12 @@ int ONScripterLabel::playSound(const char *filename, int format, bool loop_flag,
             // _and_ that the file contains uncompressed PCM data
             char *fmtname = new char[strlen(filename) + strlen(".fmt") + 1];
             sprintf(fmtname, "%s.fmt", filename);
-            unsigned int fmtlen = script_h.cBR->getFileLength( fmtname );
+            unsigned int fmtlen = script_h.cBR->getFileLength_cstr( fmtname );
             if ( fmtlen >= 8) {
                 // a file called filename + ".fmt" exists, of appropriate size;
                 // read fmt info
                 unsigned char *buffer2 = new unsigned char[fmtlen];
-                script_h.cBR->getFile( fmtname, buffer2 );
+                script_h.cBR->getFile_cstr( fmtname, buffer2 );
 
                 int channels, bits;
                 unsigned long rate=0, data_length=0;
@@ -674,7 +674,7 @@ int ONScripterLabel::playMPEG( const char *filename, bool async_flag, bool use_p
     if (surround_rects) delete[] surround_rects;
     surround_rects = NULL;
 
-    unsigned long length = script_h.cBR->getFileLength( filename );
+    unsigned long length = script_h.cBR->getFileLength_cstr( filename );
 
     if (length == 0) {
         snprintf(script_h.errbuf, MAX_ERRBUF_LEN,
@@ -684,7 +684,7 @@ int ONScripterLabel::playMPEG( const char *filename, bool async_flag, bool use_p
     }
 
     movie_buffer = new unsigned char[length];
-    script_h.cBR->getFile( filename, movie_buffer );
+    script_h.cBR->getFile_cstr( filename, movie_buffer );
 
     /* check for AVI header format */
     if ( IS_AVI_HDR(movie_buffer) ){

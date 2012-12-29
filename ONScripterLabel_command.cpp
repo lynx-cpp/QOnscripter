@@ -3191,7 +3191,7 @@ int ONScripterLabel::fileexistCommand()
     script_h.pushVariable();
     const char *buf = script_h.readStr();
 
-    int found = (script_h.cBR->getFileLength(buf)>0)?1:0;
+    int found = (script_h.cBR->getFileLength_cstr(buf)>0)?1:0;
     if (!found) {
         char fn[4096];
         sprintf(fn, "%s%s", script_h.save_path, buf);
