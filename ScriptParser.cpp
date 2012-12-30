@@ -453,7 +453,7 @@ int ScriptParser::open()
 {
     script_h.cBR = new DirectReader( archive_path );
 //    script_h.cBR = new DirectReader( archive_path, key_table );
-    script_h.cBR->open();
+    script_h.cBR->open_cstr();
 
     script_h.game_identifier = cmdline_game_id;
     cmdline_game_id = NULL;

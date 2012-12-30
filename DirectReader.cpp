@@ -47,15 +47,7 @@ DirectReader::~DirectReader()
     }
 }
 
-bool hasTwoByteChar(const char *str)
-{
-    const char *ptr = str;
-    while (*ptr != 0)
-        ptr++;
-    return false;
-}
-
-FILE *DirectReader::fopen(const char *path, const char *mode)
+FILE *DirectReader::fopen_cstr(const char *path, const char *mode)
 {
     return fopen(string(path), string(mode));
 }
@@ -149,11 +141,13 @@ unsigned long DirectReader::swapLong( unsigned long ch )
 
 int DirectReader::open( const string &name )
 {
+    cout << "calling open()\n";
     return 0;
 }
 
-int DirectReader::open( const char *name )
+int DirectReader::open_cstr( const char *name )
 {
+    cout << "calling open_cstr()\n";
     return 0;
 }
 
@@ -164,8 +158,7 @@ int DirectReader::close()
 
 const string DirectReader::getArchiveName() const
 {
-    string archiveName = "direct";
-    return archiveName;
+    return "direct";
 }
 
 const char *DirectReader::getArchiveName_cstr() const
@@ -189,7 +182,7 @@ void DirectReader::registerCompressionType(const string &ext, int type)
     last_registered_compression_type = last_registered_compression_type->next;
 }
     
-int DirectReader::getRegisteredCompressionType( const char *file_name )
+int DirectReader::getRegisteredCompressionType_cstr( const char *file_name )
 {
     getRegisteredCompressionType(string(file_name));
 }
@@ -217,11 +210,6 @@ struct DirectReader::FileInfo DirectReader::getFileByIndex( unsigned int index )
 {
     DirectReader::FileInfo fi;
     return fi;
-}
-
-FILE *DirectReader::getFileHandle( const char *file_name, int &compression_type, size_t *length )
-{
-    return getFileHandle(string(file_name), compression_type, length);
 }
 
 FILE *DirectReader::getFileHandle(const string &file_name, int &compression_type, size_t *length)
@@ -256,7 +244,7 @@ FILE *DirectReader::getFileHandle(const string &file_name, int &compression_type
 
 size_t DirectReader::getFileLength_cstr( const char *file_name )
 {
-    return getFileLength(string(file_name));
+    return DirectReader::getFileLength(string(file_name));
 }
 
 size_t DirectReader::getFileLength(const string &file_name)
@@ -273,7 +261,7 @@ size_t DirectReader::getFileLength(const string &file_name)
 size_t DirectReader::getFile_cstr( const char *file_name, unsigned char *buffer,
                               int *location )
 {
-    return getFile(string(file_name), buffer, location);
+    return DirectReader::getFile(string(file_name), buffer, location);
 }
 
 size_t DirectReader::getFile(const string &file_name, unsigned char *buffer, int *location)

@@ -1,40 +1,10 @@
-/* -*- C++ -*-
- *
- *  NsaReader.cpp - Reader from a NSA archive
- *
- *  Copyright (c) 2001-2008 Ogapee. All rights reserved.
- *  (original ONScripter, of which this is a fork).
- *
- *  ogapee@aqua.dti2.ne.jp
- *
- *  Copyright (c) 2007-2010 "Uncle" Mion Sonozaki
- *
- *  UncleMion@gmail.com
- *
- *  This program is free software; you can redistribute it and/or modify
- *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation; either version 2 of the License, or
- *  (at your option) any later version.
- *
- *  This program is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU General Public License for more details.
- *
- *  You should have received a copy of the GNU General Public License
- *  along with this program; if not, see <http://www.gnu.org/licenses/>
- *  or write to the Free Software Foundation, Inc.,
- *  59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
- */
-
-// Modified by Mion, December 2009, to support NS2 archives and allow
-// creating new archives via nsamake and ns2make
-
 #include "NsaReader.h"
 #include <cstdio>
 #include <string.h>
 #define NSA_ARCHIVE_NAME "arc"
 #define NSA_ARCHIVE_NAME2 "arc%d"
+
+using namespace std;
 
 NsaReader::NsaReader( DirPaths &path, int nsaoffset, const unsigned char *key_table )
         :SarReader( path, key_table )
@@ -55,11 +25,14 @@ NsaReader::~NsaReader()
 {
 }
 
-#ifndef TOOLS_BUILD
-
-int NsaReader::open( const char *nsa_path )
+int NsaReader::open_cstr( const char *nsa_path )
 {
-    const DirPaths paths = DirPaths(nsa_path);
+    return NsaReader::open(string(nsa_path));
+}
+
+int NsaReader::open(const string &nsa_path)
+{
+    DirPaths paths(nsa_path);
     return processArchives(paths);
 }
 
@@ -157,45 +130,10 @@ int NsaReader::processArchives( const DirPaths &path )
     }
 }
 
-#else //def TOOLS_BUILD
-
-NsaReader::ArchiveInfo* NsaReader::openForCreate( const char *nsa_name, int archive_type, int nsaoffset )
+const string NsaReader::getArchiveName() const
 {
-    sar_flag = false;
-    nsa_offset = nsaoffset;
-    if ( ( archive_info_nsa.file_handle = ::fopen( nsa_name, "wb" ) ) == NULL ){
-        fprintf( stderr, "can't open file %s\n", nsa_name );
-        return NULL;
-    }
-
-    return &archive_info_nsa;
+    return "nsa";
 }
-
-int NsaReader::openForConvert( const char *nsa_name, int archive_type, int nsaoffset )
-{
-    sar_flag = false;
-    nsa_offset = nsaoffset;
-    if ( ( archive_info_nsa.file_handle = ::fopen( nsa_name, "rb" ) ) == NULL ){
-        fprintf( stderr, "can't open file %s\n", nsa_name );
-        return -1;
-    }
-
-    return readArchive( &archive_info_nsa, archive_type, nsa_offset );
-}
-
-int NsaReader::writeHeader( FILE *fp, int archive_type, int nsaoffset )
-{
-    ArchiveInfo *ai = &archive_info_nsa;
-    return writeHeaderSub( ai, fp, archive_type, nsaoffset );
-}
-
-size_t NsaReader::putFile( FILE *fp, int no, size_t offset, size_t length, size_t original_length, int compression_type, bool modified_flag, unsigned char *buffer )
-{
-    ArchiveInfo *ai = &archive_info_nsa;
-    return putFileSub( ai, fp, no, offset, length, original_length , compression_type, modified_flag, buffer );
-}
-
-#endif //TOOLS_BUILD
 
 const char *NsaReader::getArchiveName_cstr() const
 {
@@ -215,7 +153,12 @@ int NsaReader::getNumFiles(){
     return total;
 }
 
-size_t NsaReader::getFileLengthSub( ArchiveInfo *ai, const char *file_name )
+size_t NsaReader::getFileLengthSub_cstr( ArchiveInfo *ai, const char *file_name )
+{
+    return getFileLengthSub(ai, string(file_name));
+}
+
+size_t NsaReader::getFileLengthSub(ArchiveInfo *ai, const string &file_name)
 {
     unsigned int i = getIndexFromFile( ai, file_name );
 
@@ -237,13 +180,17 @@ size_t NsaReader::getFileLengthSub( ArchiveInfo *ai, const char *file_name )
 
 size_t NsaReader::getFileLength_cstr( const char *file_name )
 {
+    return NsaReader::getFileLength(string(file_name));
+}
+
+size_t NsaReader::getFileLength(const string &file_name)
+{
     size_t ret;
     int i;
     
-#ifndef TOOLS_BUILD
     // direct read
-    if ( ( ret = DirectReader::getFileLength_cstr( file_name ) ) ) return ret;
-#endif
+    if ( ( ret = DirectReader::getFileLength( file_name ) ) ) return ret;
+
     // ns2 read
     for ( i=0 ; i<num_of_ns2_archives ; i++ ){
         if ( (ret = getFileLengthSub( &archive_info_ns2[i], file_name )) ) return ret;
@@ -258,17 +205,22 @@ size_t NsaReader::getFileLength_cstr( const char *file_name )
     }
     
     // sar read
-    if ( sar_flag ) return SarReader::getFileLength_cstr( file_name );
+    if ( sar_flag ) return SarReader::getFileLength( file_name );
 
     return 0;
 }
 
 size_t NsaReader::getFile_cstr( const char *file_name, unsigned char *buffer, int *location )
 {
+    return NsaReader::getFile(file_name, buffer, location);
+}
+
+size_t NsaReader::getFile(const string &file_name, unsigned char *buffer, int *location)
+{
     size_t ret;
 
     // direct read
-    if ( ( ret = DirectReader::getFile_cstr( file_name, buffer, location ) ) ) return ret;
+    if ( ( ret = DirectReader::getFile( file_name, buffer, location ) ) ) return ret;
 
     // ns2 read
     for ( int i=0 ; i<num_of_ns2_archives ; i++ ){
@@ -293,7 +245,7 @@ size_t NsaReader::getFile_cstr( const char *file_name, unsigned char *buffer, in
     }
 
     // sar read
-    if ( sar_flag ) return SarReader::getFile_cstr( file_name, buffer, location );
+    if ( sar_flag ) return SarReader::getFile( file_name, buffer, location );
 
     return 0;
 }

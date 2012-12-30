@@ -554,7 +554,7 @@ int ScriptParser::nsadirCommand()
 
     delete script_h.cBR;
     script_h.cBR = new NsaReader( archive_path, nsa_offset, key_table );
-    if ( script_h.cBR->open( nsa_path.get_all_paths_cstr() ) ){
+    if ( script_h.cBR->open_cstr( nsa_path.get_all_paths_cstr() ) ){
         errorAndCont( "nsadir: couldn't open any NSA archives" );
     }
 
@@ -576,7 +576,7 @@ int ScriptParser::nsaCommand()
     
     delete script_h.cBR;
     script_h.cBR = new NsaReader( archive_path, nsa_offset, key_table );
-    if ( script_h.cBR->open( nsa_path.get_all_paths_cstr() ) ){
+    if ( script_h.cBR->open_cstr( nsa_path.get_all_paths_cstr() ) ){
         errorAndCont( "nsa: couldn't open any NSA archives" );
     }
 
@@ -1538,14 +1538,14 @@ int ScriptParser::arcCommand()
     if ( strcmp( script_h.cBR->getArchiveName_cstr(), "direct" ) == 0 ){
         delete script_h.cBR;
         script_h.cBR = new SarReader( archive_path, key_table );
-        if ( script_h.cBR->open( buf2 ) ){
+        if ( script_h.cBR->open_cstr( buf2 ) ){
             snprintf(script_h.errbuf, MAX_ERRBUF_LEN,
                      "arc: couldn't open archive '%s'", buf2);
             errorAndCont( script_h.errbuf );
         }
     }
     else if ( strcmp( script_h.cBR->getArchiveName_cstr(), "sar" ) == 0 ){
-        if ( script_h.cBR->open( buf2 ) ){
+        if ( script_h.cBR->open_cstr( buf2 ) ){
             snprintf(script_h.errbuf, MAX_ERRBUF_LEN,
                      "arc: couldn't open archive '%s'", buf2);
             errorAndCont( script_h.errbuf );
@@ -1569,7 +1569,7 @@ int ScriptParser::addnsadirCommand()
 
     delete script_h.cBR;
     script_h.cBR = new NsaReader( archive_path, nsa_offset, key_table );
-    if ( script_h.cBR->open( nsa_path.get_all_paths_cstr() ) ){
+    if ( script_h.cBR->open_cstr( nsa_path.get_all_paths_cstr() ) ){
         errorAndCont( "addnsadir: couldn't open any NSA archives" );
     }
 

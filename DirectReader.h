@@ -14,7 +14,7 @@ public:
     ~DirectReader();
 
     int open( const std::string &name );
-    int open( const char *name=NULL );
+    int open_cstr( const char *name=NULL );
     int close();
 
     const std::string getArchiveName() const;
@@ -50,22 +50,25 @@ protected:
         int type;
         RegisteredCompressionType(){
             next = NULL;
-        };
-        RegisteredCompressionType( const char *ext, int type ){
-            RegisteredCompressionType(std::string(ext), type);
+        }
+        RegisteredCompressionType( const char *ext, int type ) {
+            init(std::string(ext), type);
         }
         RegisteredCompressionType(const std::string &ext, int type) {
-            for ( unsigned int i=0 ; i < ext.length(); i++ )
-                this->ext.push_back(toupper(ext[i]));
-            this->type = type;
-            this->next = NULL;
-        };
-        ~RegisteredCompressionType(){
-        };
+            init(ext, type);
+        }
+        ~RegisteredCompressionType() { }
+        private:
+            void init(const std::string &ext, int type) {
+                for (int i = 0; i < ext.length(); i++)
+                    this->ext.push_back(toupper(ext[i]));
+                this->type = type;
+                this->next = NULL;
+            }
     } root_registered_compression_type, *last_registered_compression_type;
 
     FILE *fopen(const std::string &path, const std::string &mode);
-    FILE *fopen(const char *path, const char *mode);
+    FILE *fopen_cstr(const char *path, const char *mode);
     unsigned char readChar( FILE *fp );
     unsigned short readShort( FILE *fp );
     unsigned long readLong( FILE *fp );
@@ -79,13 +82,12 @@ protected:
     size_t decodeSPB( FILE *fp, size_t offset, unsigned char *buf );
     size_t decodeLZSS( struct ArchiveInfo *ai, int no, unsigned char *buf );
     int getRegisteredCompressionType(const std::string &file_name);
-    int getRegisteredCompressionType( const char *file_name );
+    int getRegisteredCompressionType_cstr( const char *file_name );
     size_t getDecompressedFileLength( int type, FILE *fp, size_t offset );
     
 private:
     //file_name parameter is assumed to use SJIS encoding
     FILE *getFileHandle(const std::string &file_name, int &compression_type, size_t *length);
-    FILE *getFileHandle( const char *file_name, int &compression_type, size_t *length );
 };
 
 #endif // __DIRECT_READER_H__

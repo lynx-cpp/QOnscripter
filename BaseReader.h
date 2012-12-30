@@ -43,6 +43,7 @@ struct BaseReader
         FileInfo()
         : compression_type(NO_COMPRESSION),
           offset(0), length(0), original_length(0) {
+//              name.resize(256);
             for (int i = 0; i < 256; i++)
                 name_cstr[i] = '\0';
           }
@@ -73,7 +74,7 @@ struct BaseReader
 
     virtual ~BaseReader(){};
     
-    virtual int open( const char *name=NULL ) = 0;
+    virtual int open_cstr( const char *name=NULL ) = 0;
     virtual int open( const std::string &name ) = 0;
     virtual int close() = 0;
     

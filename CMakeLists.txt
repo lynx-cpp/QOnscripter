@@ -92,6 +92,6 @@ link_libraries(
 #    ${QT_LIBRARIES}
 )
 
-add_executable(onscripter ${SRCS}) # ${HDRS_MOC})
+add_executable(onscripter-fork ${SRCS}) # ${HDRS_MOC})
 
 set(CMAKE_BUILD_TYPE Debug)
