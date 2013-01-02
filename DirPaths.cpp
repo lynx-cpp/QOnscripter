@@ -97,7 +97,7 @@ const string& DirPaths::get_all_paths() const
 const char* DirPaths::get_path_cstr( int n ) const
 {
     if (0 <= n && n < paths.size())
-        return paths[n].c_str();
+        return paths.empty() ? "" : paths[n].c_str();
     else
         return NULL;
 }

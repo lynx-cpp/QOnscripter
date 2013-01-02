@@ -1817,7 +1817,7 @@ void ONScripterLabel::executeLabel()
         if ((debug_level > 0) && (last_token_line != current_line) &&
             (script_h.getStringBuffer()[0] != 0x0a)) {
             printf("\n*****  executeLabel %s:%d/%d:mode=%s *****\n",
-                   current_label_info.name,
+                   current_label_info.name_cstr,
                    current_line,
                    current_label_info.num_of_lines,
                    (display_mode == 0 ? "normal" : (display_mode == 1 ? "text" : "updated")));
@@ -1866,11 +1866,11 @@ void ONScripterLabel::executeLabel()
         if (!(ret & RET_NO_READ)) readToken();
     }
 
-    current_label_info = script_h.lookupLabelNext( current_label_info.name );
+    current_label_info = script_h.lookupLabelNext( current_label_info.name_cstr );
     current_line = 0; last_token_line = -1;
 
-    if ( current_label_info.start_address != NULL ){
-        script_h.setCurrent( current_label_info.label_header );
+    if ( current_label_info.start_address_cstr != NULL ){
+        script_h.setCurrent( current_label_info.label_header_cstr );
         readToken();
         goto executeLabelTop;
     }
@@ -1958,7 +1958,7 @@ void ONScripterLabel::readToken()
         (!pagetag_flag || (page_enter_status == 0)))
         pretext_check = true;
 
-    script_h.readToken(pretext_check);
+    script_h.readToken_cstr(pretext_check);
     string_buffer_offset = 0;
 
     if (script_h.isText() && (linepage_mode > 0) &&
@@ -2398,7 +2398,7 @@ void ONScripterLabel::loadEnvData()
         }
         readStr( &savedir );
         if (savedir)
-            script_h.setSavedir(savedir);
+            script_h.setSavedir_cstr(savedir);
         else
             setStr( &savedir, "" ); //prevents changing savedir
         automode_time = readInt();

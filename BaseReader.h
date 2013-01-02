@@ -35,7 +35,6 @@ struct BaseReader
 
     struct FileInfo{
         std::string name;
-//        char name_cstr[256];
         int  compression_type;
         size_t offset;
         size_t length;
@@ -43,9 +42,6 @@ struct BaseReader
         FileInfo()
         : compression_type(NO_COMPRESSION),
           offset(0), length(0), original_length(0) {
-//              name.resize(256);
-//            for (int i = 0; i < 256; i++)
-//                name_cstr[i] = '\0';
           }
     };
 

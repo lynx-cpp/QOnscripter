@@ -29,9 +29,7 @@ protected:
 
     int readArchive( ArchiveInfo *ai, int archive_type = ARCHIVE_TYPE_SAR, int offset = 0 );
     int getIndexFromFile(ArchiveInfo *ai, const std::string &file_name);
-    int getIndexFromFile_cstr( ArchiveInfo *ai, const char *file_name );
     size_t getFileSub(ArchiveInfo *ai, const std::string &file_name, unsigned char *buf);
-    size_t getFileSub_cstr( ArchiveInfo *ai, const char *file_name, unsigned char *buf );
 };
 
 #endif // __SAR_READER_H__

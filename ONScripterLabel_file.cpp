@@ -364,15 +364,15 @@ int ONScripterLabel::loadSaveFile( int no, bool input_flag )
         current_label_info = script_h.lookupLabel( str );
 
         current_line = readInt() + 2;
-        char *buf = current_label_info.label_header;
-        while( buf < current_label_info.start_address ){
+        char *buf = current_label_info.label_header_cstr;
+        while( buf < current_label_info.start_address_cstr ){
             if ( *buf == 0x0a ) current_line--;
             buf++;
         }
 
         offset = readInt();
 
-        script_h.setCurrent( current_label_info.label_header );
+        script_h.setCurrent( current_label_info.label_header_cstr );
         script_h.skipLine( current_line );
 
         if ( file_version <= 104 )

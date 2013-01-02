@@ -78,10 +78,10 @@ int ScriptParser::versionstrCommand()
 {
     delete[] version_str;
 
-    script_h.readStr();
+    script_h.readStr_cstr();
     const char *save_buf = script_h.saveStringBuffer();
 
-    const char *buf = script_h.readStr();
+    const char *buf = script_h.readStr_cstr();
     version_str = new char[ strlen( save_buf ) + strlen( buf ) + strlen("\n") * 2 + 1 ];
     sprintf( version_str, "%s\n%s\n", save_buf, buf );
 
@@ -125,7 +125,7 @@ int ScriptParser::transmodeCommand()
     else if ( script_h.compareString("copy") )     trans_mode = AnimationInfo::TRANS_COPY;
     else if ( script_h.compareString("alpha") )    trans_mode = AnimationInfo::TRANS_ALPHA;
     else if ( script_h.compareString("righttup") ) trans_mode = AnimationInfo::TRANS_TOPRIGHT;
-    script_h.readName();
+    script_h.readName_cstr();
 
     return RET_CONTINUE;
 }
@@ -152,7 +152,7 @@ int ScriptParser::textgosubCommand()
     if ( current_mode != DEFINE_MODE )
         errorAndExit( "textgosub: not in the define section" );
 
-    setStr( &textgosub_label, script_h.readLabel()+1 );
+    setStr( &textgosub_label, script_h.readLabel_cstr()+1 );
     script_h.enableTextgosub(true);
     
     return RET_CONTINUE;
@@ -185,9 +185,9 @@ int ScriptParser::straliasCommand()
     if ( current_mode != DEFINE_MODE )
         errorAndExit( "stralias: not in the define section" );
     
-    script_h.readName();
+    script_h.readName_cstr();
     const char *save_buf = script_h.saveStringBuffer();
-    const char *buf = script_h.readStr();
+    const char *buf = script_h.readStr_cstr();
     
     script_h.addStrAlias( save_buf, buf );
     
@@ -199,7 +199,7 @@ int ScriptParser::soundpressplginCommand()
     if ( current_mode != DEFINE_MODE )
         errorAndExit( "soundpressplgin: not in the define section" );
 
-    const char *buf = script_h.readStr();
+    const char *buf = script_h.readStr_cstr();
     int buf_len = (int) strlen(buf);
     char buf2[1024];
     if (buf_len + 1 > 1024) return RET_NOMATCH;
@@ -264,7 +264,7 @@ int ScriptParser::setlayerCommand()
 
     int no = script_h.readInt();
     int interval = script_h.readInt();
-    const char *dll = script_h.readStr();
+    const char *dll = script_h.readStr_cstr();
 
 #ifdef NO_LAYER_EFFECTS
     snprintf(script_h.errbuf, MAX_ERRBUF_LEN,
@@ -318,9 +318,9 @@ int ScriptParser::setkinsokuCommand()
     if ( current_mode != DEFINE_MODE )
         errorAndExit( "setkinsoku: not in the define section" );
 
-    script_h.readStr();
+    script_h.readStr_cstr();
     char *start = script_h.saveStringBuffer();
-    const char *end = script_h.readStr();
+    const char *end = script_h.readStr_cstr();
     setKinsoku(start, end, false);
     if (debug_level > 0)
         printf("setkinsoku: \"%s\",\"%s\"\n", start, end);
@@ -334,7 +334,7 @@ int ScriptParser::selectvoiceCommand()
         errorAndExit( "selectvoice: not in the define section" );
 
     for ( int i=0 ; i<SELECTVOICE_NUM ; i++ )
-        setStr( &selectvoice_file_name[i], script_h.readStr() );
+        setStr( &selectvoice_file_name[i], script_h.readStr_cstr() );
 
     return RET_CONTINUE;
 }
@@ -359,13 +359,13 @@ int ScriptParser::savenumberCommand()
 
 int ScriptParser::savenameCommand()
 {
-    const char *buf = script_h.readStr();
+    const char *buf = script_h.readStr_cstr();
     setStr( &save_menu_name, buf );
 
-    buf = script_h.readStr();
+    buf = script_h.readStr_cstr();
     setStr( &load_menu_name, buf );
 
-    buf = script_h.readStr();
+    buf = script_h.readStr_cstr();
     setStr( &save_item_name, buf );
 
     return RET_CONTINUE;
@@ -376,13 +376,13 @@ int ScriptParser::savedirCommand()
     if ( current_mode != DEFINE_MODE )
         errorAndExit( "savedir: not in the define section" );
 
-    const char *buf = script_h.readStr();
+    const char *buf = script_h.readStr_cstr();
 
     // Only allow setting the savedir once, no empty path
     if ((*buf != '\0') && (!savedir)) {
         // Note that savedir is relative to save_path
         setStr(&savedir, buf);
-        script_h.setSavedir(buf);
+        script_h.setSavedir_cstr(buf);
     }
 
     return RET_CONTINUE;
@@ -405,7 +405,7 @@ int ScriptParser::rubyonCommand()
         ruby_struct.font_size_xy[1] = script_h.readInt();
 
         if (!rubyon2_flag && (script_h.getEndStatus() & ScriptHandler::END_COMMA)){
-            setStr( &ruby_struct.font_name, script_h.readStr() );
+            setStr( &ruby_struct.font_name, script_h.readStr_cstr() );
         }
         else{
             setStr( &ruby_struct.font_name, NULL );
@@ -442,12 +442,12 @@ int ScriptParser::rmenuCommand()
     while ( comma_flag ){
         link->next = new RMenuLink();
 
-        const char *buf = script_h.readStr();
+        const char *buf = script_h.readStr_cstr();
         setStr( &link->next->label, buf );
         if ( rmenu_link_width < strlen( buf )/2 + 1 )
             rmenu_link_width = strlen( buf )/2 + 1;
 
-        link->next->system_call_no = getSystemCallNo( script_h.readName() );
+        link->next->system_call_no = getSystemCallNo( script_h.readName_cstr() );
 
         link = link->next;
         rmenu_link_num++;
@@ -463,7 +463,7 @@ int ScriptParser::rgosubCommand()
     if ( current_mode != DEFINE_MODE )
         errorAndExit( "rgosub: not in the define section" );
 
-    setStr( &rgosub_label, script_h.readLabel()+1 );
+    setStr( &rgosub_label, script_h.readLabel_cstr()+1 );
     script_h.enableRgosub(true);
 
     return RET_CONTINUE;
@@ -477,7 +477,7 @@ int ScriptParser::returnCommand()
     current_label_info = script_h.getLabelByAddress( last_nest_info->next_script );
     current_line = script_h.getLineByAddress( last_nest_info->next_script );
     
-    const char *label = script_h.readStr();
+    const char *label = script_h.readStr_cstr();
     if (label[0] != '*')
         script_h.setCurrent( last_nest_info->next_script );
     else
@@ -514,7 +514,7 @@ int ScriptParser::pretextgosubCommand()
     if ( current_mode != DEFINE_MODE )
         errorAndExit( "pretextgosub: not in the define section" );
 
-    setStr( &pretextgosub_label, script_h.readStr()+1 );
+    setStr( &pretextgosub_label, script_h.readStr_cstr()+1 );
     
     return RET_CONTINUE;
 }
@@ -534,7 +534,7 @@ int ScriptParser::numaliasCommand()
     if ( current_mode != DEFINE_MODE )
         errorAndExit( "numalias: numalias: not in the define section" );
 
-    script_h.readName();
+    script_h.readName_cstr();
     const char *save_buf = script_h.saveStringBuffer();
 
     int no = script_h.readInt();
@@ -548,7 +548,7 @@ int ScriptParser::nsadirCommand()
     if ( current_mode != DEFINE_MODE )
         errorAndExit( "nsadir: not in the define section" );
 
-    const char *buf = script_h.readStr();
+    const char *buf = script_h.readStr_cstr();
     
     nsa_path = DirPaths(buf);
 
@@ -660,7 +660,7 @@ int ScriptParser::movCommand()
     }
     else if ( script_h.current_variable.type == ScriptHandler::VAR_STR ){
         script_h.pushVariable();
-        const char *buf = script_h.readStr();
+        const char *buf = script_h.readStr_cstr();
         setStr( &script_h.getVariableData(script_h.pushed_variable.var_no).str, buf );
     }
     else errorAndExit( "mov: no variable" );
@@ -708,12 +708,12 @@ int ScriptParser::modCommand()
 
 int ScriptParser::midCommand()
 {
-    script_h.readStr();
+    script_h.readStr_cstr();
     if ( script_h.current_variable.type != ScriptHandler::VAR_STR )
         errorAndExit( "mid: no string variable" );
     int no = script_h.current_variable.var_no;
     
-    script_h.readStr();
+    script_h.readStr_cstr();
     const char *save_buf = script_h.saveStringBuffer();
     unsigned int start = script_h.readInt();
     unsigned int len   = script_h.readInt();
@@ -761,7 +761,7 @@ int ScriptParser::menuselectvoiceCommand()
         errorAndExit( "menuselectvoice: not in the define section" );
 
     for ( int i=0 ; i<MENUSELECTVOICE_NUM ; i++ )
-        setStr( &menuselectvoice_file_name[i], script_h.readStr() );
+        setStr( &menuselectvoice_file_name[i], script_h.readStr_cstr() );
 
     return RET_CONTINUE;
 }
@@ -791,7 +791,7 @@ int ScriptParser::maxkaisoupageCommand()
 
 int ScriptParser::luasubCommand()
 {
-    const char *cmd = script_h.readName();
+    const char *cmd = script_h.readName_cstr();
 
     if (cmd[0] >= 'a' && cmd[0] <= 'z'){
         UserFuncHash &ufh = user_func_hash[cmd[0]-'a'];
@@ -807,7 +807,7 @@ int ScriptParser::luasubCommand()
 int ScriptParser::luacallCommand()
 {
     const char *label = NULL;
-    label = script_h.readLabel();
+    label = script_h.readLabel_cstr();
 
 #ifdef USE_LUA
     lua_handler.addCallback(label);
@@ -847,7 +847,7 @@ int ScriptParser::loadgosubCommand()
     if ( current_mode != DEFINE_MODE )
         errorAndExit( "loadgosub: not in the define section" );
 
-    setStr( &loadgosub_label, script_h.readStr()+1 );
+    setStr( &loadgosub_label, script_h.readStr_cstr()+1 );
 
     return RET_CONTINUE;
 }
@@ -874,7 +874,7 @@ int ScriptParser::lenCommand()
     script_h.readInt();
     script_h.pushVariable();
     
-    const char *buf = script_h.readStr();
+    const char *buf = script_h.readStr_cstr();
 
     script_h.setInt( &script_h.pushed_variable, strlen( buf ) );
 
@@ -895,7 +895,7 @@ int ScriptParser::labelexistCommand()
 {
     script_h.readInt();
     script_h.pushVariable();
-    bool exists = script_h.hasLabel(script_h.readLabel()+1);
+    bool exists = script_h.hasLabel(script_h.readLabel_cstr()+1);
 
     script_h.setInt( &script_h.pushed_variable, exists?1:0 );
 
@@ -980,8 +980,8 @@ int ScriptParser::ifCommand()
 
     while(1){
         if (script_h.compareString("fchk")){
-            script_h.readName();
-            buf = script_h.readStr();
+            script_h.readName_cstr();
+            buf = script_h.readStr_cstr();
             if (*buf == '\0')
                 f = false;
             else {
@@ -990,8 +990,8 @@ int ScriptParser::ifCommand()
             }
         }
         else if (script_h.compareString("lchk")){
-            script_h.readName();
-            buf = script_h.readLabel();
+            script_h.readName_cstr();
+            buf = script_h.readLabel_cstr();
             if (*buf == '\0')
                 f = false;
             else {
@@ -1033,7 +1033,7 @@ int ScriptParser::ifCommand()
             }
             else{
                 script_h.setCurrent(script_h.getCurrent());
-                buf = script_h.readStr();
+                buf = script_h.readStr_cstr();
                 const char *save_buf = script_h.saveStringBuffer();
 
                 op_buf = script_h.getNext();
@@ -1049,7 +1049,7 @@ int ScriptParser::ifCommand()
                           op_buf[0] == '=' )
                     script_h.setCurrent(op_buf+1);
             
-                buf = script_h.readStr();
+                buf = script_h.readStr_cstr();
 
                 int val = strcmp( save_buf, buf );
                 if      (op_buf[0] == '>' && op_buf[1] == '=') f = (val >= 0);
@@ -1111,7 +1111,7 @@ int ScriptParser::humanposCommand()
 
 int ScriptParser::gotoCommand()
 {
-    setCurrentLabel( script_h.readLabel()+1 );
+    setCurrentLabel( script_h.readLabel_cstr()+1 );
     
     return RET_CONTINUE;
 }
@@ -1138,7 +1138,7 @@ void ScriptParser::gosubReal( const char *label, char *next_script,
 
 int ScriptParser::gosubCommand()
 {
-    const char *buf = script_h.readLabel();
+    const char *buf = script_h.readLabel_cstr();
     gosubReal( buf+1, script_h.getNext() );
 
     return RET_CONTINUE;
@@ -1174,7 +1174,7 @@ int ScriptParser::getparamCommand()
             script_h.setInt( &script_h.pushed_variable, script_h.readInt() );
         }
         else if ( script_h.pushed_variable.type & ScriptHandler::VAR_STR ){
-            const char *buf = script_h.readStr();
+            const char *buf = script_h.readStr_cstr();
             setStr( &script_h.getVariableData( script_h.pushed_variable.var_no ).str, buf );
         }
         
@@ -1214,12 +1214,12 @@ int ScriptParser::forCommand()
     if ( !script_h.compareString("to") )
         errorAndExit( "for: missing 'to'" );
 
-    script_h.readName();
+    script_h.readName_cstr();
     
     last_nest_info->to = script_h.readInt();
 
     if ( script_h.compareString("step") ){
-        script_h.readName();
+        script_h.readName_cstr();
         last_nest_info->step = script_h.readInt();
     }
     else{
@@ -1341,7 +1341,7 @@ int ScriptParser::defvoicevolCommand()
 
 int ScriptParser::defsubCommand()
 {
-    const char *cmd = script_h.readName();
+    const char *cmd = script_h.readName_cstr();
 
     if (cmd[0] >= 'a' && cmd[0] <= 'z'){
         UserFuncHash &ufh = user_func_hash[cmd[0]-'a'];
@@ -1386,7 +1386,7 @@ int ScriptParser::defaultfontCommand()
     if ( current_mode != DEFINE_MODE )
         errorAndExit( "defaultfont: not in the define section" );
 
-    setStr( &default_env_font, script_h.readStr() );
+    setStr( &default_env_font, script_h.readStr_cstr() );
 
     return RET_CONTINUE;
 }
@@ -1432,10 +1432,10 @@ int ScriptParser::cmpCommand()
     script_h.readInt();
     script_h.pushVariable();
     
-    script_h.readStr();
+    script_h.readStr_cstr();
     char *save_buf = script_h.saveStringBuffer();
 
-    const char *buf = script_h.readStr();
+    const char *buf = script_h.readStr_cstr();
 
     int val = strcmp( save_buf, buf );
     if      ( val > 0 ) val = 1;
@@ -1451,14 +1451,14 @@ int ScriptParser::clickvoiceCommand()
         errorAndExit( "clickvoice: not in the define section" );
 
     for ( int i=0 ; i<CLICKVOICE_NUM ; i++ )
-        setStr( &clickvoice_file_name[i], script_h.readStr() );
+        setStr( &clickvoice_file_name[i], script_h.readStr_cstr() );
 
     return RET_CONTINUE;
 }
 
 int ScriptParser::clickstrCommand()
 {
-    script_h.readStr();
+    script_h.readStr_cstr();
     const char *buf = script_h.saveStringBuffer();
 
     clickstr_line = script_h.readInt();
@@ -1504,7 +1504,7 @@ int ScriptParser::breakCommand()
             delete last_nest_info->next;
             last_nest_info->next = NULL;
         }
-        setCurrentLabel( script_h.readLabel()+1 );
+        setCurrentLabel( script_h.readLabel_cstr()+1 );
     }
     else{
         break_flag = true;
@@ -1518,7 +1518,7 @@ int ScriptParser::atoiCommand()
     script_h.readInt();
     script_h.pushVariable();
     
-    const char *buf = script_h.readStr();
+    const char *buf = script_h.readStr_cstr();
         
     script_h.setInt( &script_h.pushed_variable, atoi(buf) );
     
@@ -1527,7 +1527,7 @@ int ScriptParser::atoiCommand()
 
 int ScriptParser::arcCommand()
 {
-    const char *buf = script_h.readStr();
+    const char *buf = script_h.readStr_cstr();
     char *buf2 = new char[ strlen( buf ) + 1 ];
     strcpy( buf2, buf );
 
@@ -1563,7 +1563,7 @@ int ScriptParser::addnsadirCommand()
     if ( current_mode != DEFINE_MODE )
         errorAndExit( "addnsadir: not in the define section" );
 
-    const char *buf = script_h.readStr();
+    const char *buf = script_h.readStr_cstr();
     
     nsa_path.add(buf);
 
@@ -1582,9 +1582,9 @@ int ScriptParser::addkinsokuCommand()
     if ( current_mode != DEFINE_MODE )
         errorAndExit( "addkinsoku: not in the define section" );
 
-    script_h.readStr();
+    script_h.readStr_cstr();
     char *start = script_h.saveStringBuffer();
-    const char *end = script_h.readStr();
+    const char *end = script_h.readStr_cstr();
     setKinsoku(start, end, true);
     if (debug_level > 0)
         printf("addkinsoku: \"%s\",\"%s\"\n", start, end);
@@ -1606,7 +1606,7 @@ int ScriptParser::addCommand()
     else if ( script_h.current_variable.type == ScriptHandler::VAR_STR ){
         int no = script_h.current_variable.var_no;
 
-        const char *buf = script_h.readStr();
+        const char *buf = script_h.readStr_cstr();
         ScriptHandler::VariableData &vd = script_h.getVariableData(no);
         char *tmp_buffer = vd.str;
 

@@ -186,7 +186,7 @@ void ScriptHandler::reset()
     is_rgosub_click = rgosub_click_newpage = rgosub_1byte_mode = false;
 }
 
-FILE *ScriptHandler::fopen( const char *path, const char *mode, const bool save, const bool usesavedir )
+FILE *ScriptHandler::fopen_cstr( const char *path, const char *mode, const bool save, const bool usesavedir )
 {
     const char* root;
     char *file_name;
@@ -222,7 +222,7 @@ FILE *ScriptHandler::fopen( const char *path, const char *mode, const bool save,
     return fp;
 }
 
-FILE *ScriptHandler::fopen( const char *root, const char *path, const char *mode )
+FILE *ScriptHandler::fopen_cstr( const char *root, const char *path, const char *mode )
 {
     char *file_name;
     FILE *fp = NULL;
@@ -250,7 +250,7 @@ void ScriptHandler::setKeyTable( const unsigned char *key_table )
     }
 }
 
-void ScriptHandler::setSavedir( const char *dir )
+void ScriptHandler::setSavedir_cstr( const char *dir )
 {
     savedir = new char[ strlen(dir) + strlen(save_path) + 2];
     sprintf( savedir, "%s%s%c", save_path, dir, DELIMITER );
@@ -262,7 +262,7 @@ void ScriptHandler::setSavedir( const char *dir )
 }
 
 // basic parser function
-const char *ScriptHandler::readToken(bool check_pretext)
+const char *ScriptHandler::readToken_cstr(bool check_pretext)
 {
     current_script = next_script;
     char *buf = current_script;
@@ -632,7 +632,7 @@ const char *ScriptHandler::readToken(bool check_pretext)
               ch == '_');
     }
     else if (ch == '*'){ // label
-        return readLabel();
+        return readLabel_cstr();
     }
     else if ((ch == 0x0a) && !is_rgosub_click){
         addStringBuffer( ch );
@@ -657,7 +657,7 @@ const char *ScriptHandler::readToken(bool check_pretext)
     return string_buffer;
 }
 
-const char *ScriptHandler::readName()
+const char *ScriptHandler::readName_cstr()
 {
     // bare word - not a string variable
     end_status = END_NONE;
@@ -693,7 +693,7 @@ const char *ScriptHandler::readName()
     return string_buffer;
 }
 
-const char *ScriptHandler::readColor(bool *is_color)
+const char *ScriptHandler::readColor_cstr(bool *is_color)
 {
     // bare color type - not a string variable
     end_status = END_NONE;
@@ -736,7 +736,7 @@ const char *ScriptHandler::readColor(bool *is_color)
     return string_buffer;
 }
 
-const char *ScriptHandler::readLabel()
+const char *ScriptHandler::readLabel_cstr()
 {
     // *NAME, "*NAME", or $VAR that equals "*NAME"
     end_status = END_NONE;
@@ -803,7 +803,7 @@ const char *ScriptHandler::readLabel()
     return string_buffer;
 }
 
-const char *ScriptHandler::readStr()
+const char *ScriptHandler::readStr_cstr()
 {
     end_status = END_NONE;
     current_variable.type = VAR_NONE;
@@ -948,7 +948,7 @@ int ScriptHandler::getLineByAddress( char *address )
     }
     LabelInfo label = getLabelByAddress( address );
 
-    char *addr = label.label_header;
+    char *addr = label.label_header_cstr;
     int line = 0;
     while ( address > addr && line < label.num_of_lines){
         if ( *addr == 0x0a ) line++;
@@ -962,7 +962,7 @@ char *ScriptHandler::getAddressByLine( int line )
     LabelInfo label = getLabelByLine( line );
 
     int l = line - label.start_line;
-    char *addr = label.label_header;
+    char *addr = label.label_header_cstr;
     while ( l > 0 ){
         while( *addr != 0x0a ) addr++;
         addr++;
@@ -975,7 +975,7 @@ ScriptHandler::LabelInfo ScriptHandler::getLabelByAddress( char *address )
 {
     int i;
     for ( i=0 ; i<num_of_labels-1 ; i++ ){
-        if ( label_info[i+1].start_address > address )
+        if ( label_info[i+1].start_address_cstr > address )
             return label_info[i];
     }
     return label_info[i];
@@ -1065,7 +1065,7 @@ void ScriptHandler::saveKidokuData(bool no_error)
 {
     FILE *fp;
 
-    if ( ( fp = fopen( "kidoku.dat", "wb", true, true ) ) == NULL ){
+    if ( ( fp = fopen_cstr( "kidoku.dat", "wb", true, true ) ) == NULL ){
         if (!no_error)
             errorAndCont( "can't open kidoku.dat for writing", NULL, "I/O Warning" );
         return;
@@ -1087,7 +1087,7 @@ void ScriptHandler::loadKidokuData()
     kidoku_buffer = new char[ script_buffer_length/8 + 1 ];
     memset( kidoku_buffer, 0, script_buffer_length/8 + 1 );
 
-    if ( ( fp = fopen( "kidoku.dat", "rb", true, true ) ) != NULL ){
+    if ( ( fp = fopen_cstr( "kidoku.dat", "rb", true, true ) ) != NULL ){
         if (fread( kidoku_buffer, 1, script_buffer_length/8, fp ) !=
             size_t(script_buffer_length/8)) {
             if (ferror(fp))
@@ -1408,23 +1408,23 @@ int ScriptHandler::readScript( DirPaths &path )
         const char *curpath = archive_path->get_path_cstr(n);
         const char *filename = "";
         
-        if ((fp = fopen(curpath, "0.txt", "rb")) != NULL){
+        if ((fp = fopen_cstr(curpath, "0.txt", "rb")) != NULL){
             encrypt_mode = 0;
             filename = "0.txt";
         }
-        else if ((fp = fopen(curpath, "00.txt", "rb")) != NULL){
+        else if ((fp = fopen_cstr(curpath, "00.txt", "rb")) != NULL){
             encrypt_mode = 0;
             filename = "00.txt";
         }
-        else if ((fp = fopen(curpath, "nscr_sec.dat", "rb")) != NULL){
+        else if ((fp = fopen_cstr(curpath, "nscr_sec.dat", "rb")) != NULL){
             encrypt_mode = 2;
             filename = "nscr_sec.dat";
         }
-        else if ((fp = fopen(curpath, "nscript.___", "rb")) != NULL){
+        else if ((fp = fopen_cstr(curpath, "nscript.___", "rb")) != NULL){
             encrypt_mode = 3;
             filename = "nscript.___";
         }
-        else if ((fp = fopen(curpath, "nscript.dat", "rb")) != NULL){
+        else if ((fp = fopen_cstr(curpath, "nscript.dat", "rb")) != NULL){
             encrypt_mode = 1;
             filename = "nscript.dat";
         }
@@ -1451,9 +1451,9 @@ int ScriptHandler::readScript( DirPaths &path )
         fclose(fp);
         for (i=1 ; i<100 ; i++){
             sprintf(filename, "%d.txt", i);
-            if ((fp = fopen(script_path, filename, "rb")) == NULL){
+            if ((fp = fopen_cstr(script_path, filename, "rb")) == NULL){
                 sprintf(filename, "%02d.txt", i);
-                fp = fopen(script_path, filename, "rb");
+                fp = fopen_cstr(script_path, filename, "rb");
             }
             if (fp){
                 fseek( fp, 0, SEEK_END );
@@ -1478,9 +1478,9 @@ int ScriptHandler::readScript( DirPaths &path )
     else{
         for (i=0 ; i<100 ; i++){
             sprintf(filename, "%d.txt", i);
-            if ((fp = fopen(script_path, filename, "rb")) == NULL){
+            if ((fp = fopen_cstr(script_path, filename, "rb")) == NULL){
                 sprintf(filename, "%02d.txt", i);
-                fp = fopen(script_path, filename, "rb");
+                fp = fopen_cstr(script_path, filename, "rb");
             }
             if (fp){
                 readScriptSub( fp, &p_script_buffer, 0 );
@@ -1493,7 +1493,7 @@ int ScriptHandler::readScript( DirPaths &path )
     // Haeleth: Search for gameid file (this overrides any builtin
     // ;gameid directive, or serves its purpose if none is available)
     if (!game_identifier) { //Mion: only if gameid not already set
-        fp = fopen(script_path, "game.id", "rb"); //Mion: search only the script path
+        fp = fopen_cstr(script_path, "game.id", "rb"); //Mion: search only the script path
         if (fp) {
             size_t line_size = 0;
             char c;
@@ -1571,10 +1571,10 @@ int ScriptHandler::labelScript()
         SKIP_SPACE( buf );
         if ( *buf == '*' ){
             setCurrent( buf );
-            readLabel();
-            label_info[ ++label_counter ].name = new char[ strlen(string_buffer) ];
-            strcpy( label_info[ label_counter ].name, string_buffer+1 );
-            label_info[ label_counter ].label_header = buf;
+            readLabel_cstr();
+            label_info[ ++label_counter ].name_cstr = new char[ strlen(string_buffer) ];
+            strcpy( label_info[ label_counter ].name_cstr, string_buffer+1 );
+            label_info[ label_counter ].label_header_cstr = buf;
             label_info[ label_counter ].num_of_lines = 1;
             label_info[ label_counter ].start_line   = current_line;
             buf = getNext();
@@ -1583,7 +1583,7 @@ int ScriptHandler::labelScript()
                 SKIP_SPACE(buf);
                 current_line++;
             }
-            label_info[ label_counter ].start_address = buf;
+            label_info[ label_counter ].start_address_cstr = buf;
         }
         else{
             if ( label_counter >= 0 )
@@ -1594,7 +1594,7 @@ int ScriptHandler::labelScript()
         }
     }
 
-    label_info[num_of_labels].start_address = NULL;
+    label_info[num_of_labels].start_address_cstr = NULL;
 
     return 0;
 }
@@ -1608,7 +1608,7 @@ struct ScriptHandler::LabelInfo ScriptHandler::lookupLabel( const char *label )
         errorAndExit( errbuf, NULL, "Label Error" );
     }
 
-    findAndAddLog( log_info[LABEL_LOG], label_info[i].name, true );
+    findAndAddLog( log_info[LABEL_LOG], label_info[i].name_cstr, true );
     return label_info[i];
 }
 
@@ -1622,7 +1622,7 @@ struct ScriptHandler::LabelInfo ScriptHandler::lookupLabelNext( const char *labe
     }
 
     if ( i+1 < num_of_labels ){
-        findAndAddLog( log_info[LABEL_LOG], label_info[i+1].name, true );
+        findAndAddLog( log_info[LABEL_LOG], label_info[i+1].name_cstr, true );
         return label_info[i+1];
     }
 
@@ -1645,14 +1645,14 @@ ScriptHandler::LogLink *ScriptHandler::findAndAddLog( LogInfo &info, const char 
 
     LogLink *cur = info.root_log.next;
     while( cur ){
-        if ( !strcmp( cur->name, capital_name ) ) break;
+        if ( !strcmp( cur->name_cstr, capital_name ) ) break;
         cur = cur->next;
     }
     if ( !add_flag || cur ) return cur;
 
     LogLink *link = new LogLink();
-    link->name = new char[strlen(capital_name)+1];
-    strcpy( link->name, capital_name );
+    link->name_cstr = new char[strlen(capital_name)+1];
+    strcpy( link->name_cstr, capital_name );
     info.current_log->next = link;
     info.current_log = info.current_log->next;
     info.num_logs++;
@@ -1764,10 +1764,10 @@ void ScriptHandler::processError( const char *str, const char *title, const char
         }
         if (linenum < 0) {
             fprintf(stderr, " ***[%s] %s at line ?? (*%s:)%s - %s ***\n",
-                    type, title, label.name, errcmd, str);
+                    type, title, label.name_cstr, errcmd, str);
         } else {
             fprintf(stderr, " ***[%s] %s at line %d (*%s:%d)%s - %s ***\n",
-                    type, title, linenum, label.name, lblinenum, errcmd, str);
+                    type, title, linenum, label.name_cstr, lblinenum, errcmd, str);
         }
         if (detail)
             fprintf(stderr, "\t%s\n", detail);
@@ -1781,11 +1781,11 @@ void ScriptHandler::processError( const char *str, const char *title, const char
         if (is_warning) {
             if (linenum < 0) {
                 snprintf(errhist, 1024, "%s\nat line ?? (*%s:)%s\n%s",
-                         str, label.name, errcmd,
+                         str, label.name_cstr, errcmd,
                          detail ? detail : "");
             } else {
                 snprintf(errhist, 1024, "%s\nat line %d (*%s:%d)%s\n%s",
-                         str, linenum, label.name, lblinenum, errcmd,
+                         str, linenum, label.name_cstr, lblinenum, errcmd,
                          detail ? detail : "");
             }
 
@@ -1819,7 +1819,7 @@ void ScriptHandler::processError( const char *str, const char *title, const char
         }
 
         snprintf(errhist, 1024, "%s\nat line %d (*%s:%d)%s\n\n| %s\n| %s\n> %s",
-                 str, linenum, label.name, lblinenum, errcmd,
+                 str, linenum, label.name_cstr, lblinenum, errcmd,
                  line[0], line[1], line[2]);
 
         for (i=0; i<4; i++) {
@@ -1928,7 +1928,7 @@ int ScriptHandler::findLabel( const char *label )
         if ( 'A' <= capital_label[i] && capital_label[i] <= 'Z' ) capital_label[i] += 'a' - 'A';
     }
     for ( i=0 ; i<num_of_labels ; i++ ){
-        if ( !strcmp( label_info[i].name, capital_label ) )
+        if ( !strcmp( label_info[i].name_cstr, capital_label ) )
             return i;
     }
 

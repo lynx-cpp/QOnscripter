@@ -1,9 +1,11 @@
 #include "NsaReader.h"
 #include <cstdio>
 #define NSA_ARCHIVE_NAME "arc"
-#define NSA_ARCHIVE_NAME2 "arc%d"
 
 using namespace std;
+
+const string NsaReader::nsa_archive_ext = "nsa";
+const string NsaReader::ns2_archive_ext = "ns2";
 
 NsaReader::NsaReader( DirPaths &path, int nsaoffset, const unsigned char *key_table )
         :SarReader( path, key_table )
@@ -11,13 +13,6 @@ NsaReader::NsaReader( DirPaths &path, int nsaoffset, const unsigned char *key_ta
     sar_flag = true;
     nsa_offset = nsaoffset;
     num_of_nsa_archives = num_of_ns2_archives = 0;
-
-    if (key_table)
-        nsa_archive_ext = "___";
-    else
-        nsa_archive_ext = "nsa";
-
-    ns2_archive_ext = "ns2";
 }
 
 NsaReader::~NsaReader()
@@ -39,7 +34,7 @@ int NsaReader::processArchives( const DirPaths &path )
 {
     int i,j,k,n,nd;
     FILE *fp;
-    char archive_name[256], archive_name2[256];
+    string archive_name, archive_name2;
 
     if ( !SarReader::open( "arc.sar" ) ) {
         sar_flag = true;
@@ -54,16 +49,15 @@ int NsaReader::processArchives( const DirPaths &path )
     n = nd = 0;
     while ((i<MAX_EXTRA_ARCHIVE) && (n<archive_path->get_num_paths())) {
         if (j < 0) {
-            sprintf( archive_name, "%s%s.%s", nsa_path->get_path_cstr(nd), NSA_ARCHIVE_NAME, nsa_archive_ext );
-            sprintf(archive_name2, "%s%s", archive_path->get_path_cstr(n), archive_name);
+            archive_name = nsa_path->get_path(nd) + NSA_ARCHIVE_NAME + "." + nsa_archive_ext;
+            archive_name2 = archive_path->get_path(n) + archive_name;
         } else {
-            sprintf( archive_name2, NSA_ARCHIVE_NAME2, j+1 );
-            sprintf( archive_name, "%s%s.%s", nsa_path->get_path_cstr(nd), archive_name2, nsa_archive_ext );
-            sprintf(archive_name2, "%s%s", archive_path->get_path_cstr(n), archive_name);
+            archive_name2 = NSA_ARCHIVE_NAME + std::to_string(j + 1);
+            archive_name = nsa_path->get_path(nd) + archive_name2 + "." + nsa_archive_ext;
+            archive_name2 = archive_path->get_path(n) + archive_name;
         }
-        fp = std::fopen(archive_name2, "rb");
+        fp = std::fopen(archive_name2.c_str(), "rb");
         if (fp != NULL) {
-            //printf("Found archive %s\n", archive_name2); fflush(stdout);
             if (i < 0) {
                 archive_info_nsa.file_handle = fp;
                 archive_info_nsa.file_name = archive_name2;
@@ -88,15 +82,18 @@ int NsaReader::processArchives( const DirPaths &path )
     k = 0;
     n = nd = 0;
     while ((k<MAX_NS2_ARCHIVE) && (n<archive_path->get_num_paths())) {
-        sprintf( archive_name, "%s00.%s", nsa_path->get_path_cstr(nd), ns2_archive_ext );
-        sprintf(archive_name2, "%s%s", archive_path->get_path_cstr(n), archive_name);
-        fp = std::fopen(archive_name2, "rb");
+        archive_name = nsa_path->get_path(nd) + "00." + ns2_archive_ext;
+        archive_name2 = archive_path->get_path(n) + archive_name;
+        fp = std::fopen(archive_name2.c_str(), "rb");
         if (fp != NULL) {
             fclose(fp);
             for (j=MAX_NS2_ARCHIVE_NUM; (j>=0) && (k<MAX_NS2_ARCHIVE); j--) {
-                sprintf( archive_name, "%s%02d.%s", nsa_path->get_path_cstr(nd), j, ns2_archive_ext );
-                sprintf(archive_name2, "%s%s", archive_path->get_path_cstr(n), archive_name);
-                fp = std::fopen(archive_name2, "rb");
+                archive_name = nsa_path->get_path(nd);
+                archive_name.push_back('0' + j / 10);
+                archive_name.push_back('0' + j % 10);
+                archive_name += "." + ns2_archive_ext;
+                archive_name2 = archive_path->get_path(n) + archive_name;
+                fp = std::fopen(archive_name2.c_str(), "rb");
                 if (fp == NULL) {
                     if (j == 0) break;
                 } else {
@@ -108,7 +105,7 @@ int NsaReader::processArchives( const DirPaths &path )
             }
         }
         nd++;
-        if (nd > nsa_path->get_num_paths()) {
+        if (nd >= nsa_path->get_num_paths()) {
             nd = 0;
             n++;
         }
@@ -116,8 +113,8 @@ int NsaReader::processArchives( const DirPaths &path )
 
     if ((i < 0) && (k < 0)) {
         // didn't find any (main) archive files
-        fprintf( stderr, "can't open nsa archive file %s.%s ", NSA_ARCHIVE_NAME, nsa_archive_ext );
-        fprintf( stderr, "or ns2 archive file 00.%s ", ns2_archive_ext );
+        cerr << "can't open nsa archive file " << NSA_ARCHIVE_NAME << '.' << nsa_archive_ext;
+        cerr << "or ns2 archive file 00." << ns2_archive_ext;
         return -1;
     } else {
         num_of_nsa_archives = i+1;
@@ -147,11 +144,6 @@ int NsaReader::getNumFiles(){
     for ( i=0 ; i<num_of_ns2_archives ; i++ ) total += archive_info_ns2[i].num_of_files; // add in the ##.ns2 files
 
     return total;
-}
-
-size_t NsaReader::getFileLengthSub_cstr( ArchiveInfo *ai, const char *file_name )
-{
-    return getFileLengthSub(ai, string(file_name));
 }
 
 size_t NsaReader::getFileLengthSub(ArchiveInfo *ai, const string &file_name)

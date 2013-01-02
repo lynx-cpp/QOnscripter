@@ -5,14 +5,8 @@
 #include <string>
 #include <vector>
 
-#ifdef WIN32
-#define DELIMITER '\\'
-#define PATH_DELIMITER ';'
-#else
 #define DELIMITER '/'
 #define PATH_DELIMITER ':'
-#endif
-
 
 class DirPaths
 {

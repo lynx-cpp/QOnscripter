@@ -963,8 +963,8 @@ void ScriptParser::writeLog( ScriptHandler::LogInfo &info )
         ScriptHandler::LogLink *cur = info.root_log.next;
         for ( i=0 ; i<info.num_logs ; i++ ){
             writeChar( '"', output_flag );
-            for ( j=0 ; j<(int)strlen( cur->name ) ; j++ )
-                writeChar( cur->name[j] ^ 0x84, output_flag );
+            for ( j=0 ; j<(int)strlen( cur->name_cstr ) ; j++ )
+                writeChar( cur->name_cstr[j] ^ 0x84, output_flag );
             writeChar( '"', output_flag );
             cur = cur->next;
         }
@@ -1048,8 +1048,8 @@ void ScriptParser::setStr( char **dst, const char *src, int num )
 void ScriptParser::setCurrentLabel( const char *label )
 {
     current_label_info = script_h.lookupLabel( label );
-    current_line = script_h.getLineByAddress( current_label_info.start_address );
-    script_h.setCurrent( current_label_info.start_address );
+    current_line = script_h.getLineByAddress( current_label_info.start_address_cstr );
+    script_h.setCurrent( current_label_info.start_address_cstr );
 }
 
 int ScriptParser::readEffect( EffectLink *effect )
@@ -1062,7 +1062,7 @@ int ScriptParser::readEffect( EffectLink *effect )
         effect->duration = script_h.readInt();
         if ( script_h.getEndStatus() & ScriptHandler::END_COMMA ){
             num++;
-            const char *buf = script_h.readStr();
+            const char *buf = script_h.readStr_cstr();
             effect->anim.setImageName( buf );
         }
         else

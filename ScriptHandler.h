@@ -41,6 +41,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <string>
 #include "BaseReader.h"
 #include "DirPaths.h"
 
@@ -64,9 +65,9 @@ public:
            END_COMMA_READ = 4 // for LUA
     };
     struct LabelInfo{
-        char *name;
-        char *label_header;
-        char *start_address;
+        char *name_cstr;
+        char *label_header_cstr;
+        char *start_address_cstr;
         int  start_line;
         int  num_of_lines;
     };
@@ -122,20 +123,20 @@ public:
     ~ScriptHandler();
 
     void reset();
-    FILE *fopen( const char *path, const char *mode, const bool save = false, const bool usesavedir = false );
-    FILE *fopen( const char *root, const char *path, const char *mode);
+    FILE *fopen_cstr( const char *path, const char *mode, const bool save = false, const bool usesavedir = false );
+    FILE *fopen_cstr( const char *root, const char *path, const char *mode);
     void setKeyTable( const unsigned char *key_table );
 
-    void setSavedir( const char *dir );
+    void setSavedir_cstr( const char *dir );
     inline void setOns( ONScripterLabel *newons){ ons = newons; }
 
     // basic parser function
-    const char *readToken(bool check_pretext);
-    const char *readName();
-    const char *readColor(bool *is_color = NULL);
-    const char *readLabel();
+    const char *readToken_cstr(bool check_pretext);
+    const char *readName_cstr();
+    const char *readColor_cstr(bool *is_color = NULL);
+    const char *readLabel_cstr();
     void readVariable( bool reread_flag=false );
-    const char *readStr();
+    const char *readStr_cstr();
     int  readInt();
     int  parseInt( char **buf );
     void skipToken();
@@ -233,14 +234,14 @@ public:
     };
     struct LogLink{
         LogLink *next;
-        char *name;
+        char *name_cstr;
 
         LogLink(){
             next = NULL;
-            name = NULL;
+            name_cstr = NULL;
         };
         ~LogLink(){
-            if ( name ) delete[] name;
+            if ( name_cstr ) delete[] name_cstr;
         };
     };
     struct LogInfo{

@@ -61,6 +61,8 @@ set(HDRS
     version.h
 )
 
+set(CMAKE_CXX_FLAGS "-std=c++0x")
+
 #find_package(Qt4 REQUIRED)
 #set(CMAKE_AUTOMOC TRUE)
 #include(${QT_USE_FILE})

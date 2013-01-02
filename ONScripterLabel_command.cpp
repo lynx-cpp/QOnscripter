@@ -82,10 +82,10 @@ int ONScripterLabel::yesnoboxCommand()
 
     script_h.readVariable();
     script_h.pushVariable();
-    const char *buf = script_h.readStr();
+    const char *buf = script_h.readStr_cstr();
     char *msg = new char[strlen(buf)+1];
     sprintf(msg,"%s",buf);
-    const char *title = script_h.readStr();
+    const char *title = script_h.readStr_cstr();
     int res = 1;
     if(!answer_dialog_with_yes_ok) {
         //The OS X dialog box routines are crashing when in fullscreen mode,
@@ -131,7 +131,7 @@ int ONScripterLabel::waveCommand()
 
     wavestopCommand();
 
-    setStr(&wave_file_name, script_h.readStr());
+    setStr(&wave_file_name, script_h.readStr_cstr());
     playSound(wave_file_name, SOUND_WAVE|SOUND_OGG, wave_play_loop_flag, MIX_WAVE_CHANNEL);
 
     return RET_CONTINUE;
@@ -253,12 +253,12 @@ int ONScripterLabel::trapCommand()
     }
 
     if ( script_h.compareString("off") ){
-        script_h.readName();
+        script_h.readName_cstr();
         trap_mode = TRAP_NONE;
         return RET_CONTINUE;
     }
 
-    const char *buf = script_h.readLabel();
+    const char *buf = script_h.readLabel_cstr();
     if ( buf[0] == '*' ){
         setStr(&trap_dest, buf+1);
     }
@@ -338,7 +338,7 @@ int ONScripterLabel::texthideCommand()
 int ONScripterLabel::textexbtnCommand()
 {
     int txtbtn_no = script_h.readInt();
-    const char *buf = script_h.readStr();
+    const char *buf = script_h.readStr_cstr();
 
     TextButtonInfoLink *info = text_button_info.next;
     TextButtonInfoLink *found = NULL;
@@ -428,7 +428,7 @@ int ONScripterLabel::talCommand()
 {
     leaveTextDisplayMode();
 
-    char loc = script_h.readName()[0];
+    char loc = script_h.readName_cstr()[0];
     int no = -1, trans = 0;
     if      ( loc == 'l' ) no = 0;
     else if ( loc == 'c' ) no = 1;
@@ -456,7 +456,7 @@ int ONScripterLabel::tablegotoCommand()
     int no = script_h.readInt();
 
     while( script_h.getEndStatus() & ScriptHandler::END_COMMA ){
-        const char *buf = script_h.readLabel();
+        const char *buf = script_h.readLabel_cstr();
         if ( count++ == no ){
             setCurrentLabel( buf+1 );
             break;
@@ -468,7 +468,7 @@ int ONScripterLabel::tablegotoCommand()
 
 int ONScripterLabel::systemcallCommand()
 {
-    system_menu_mode = getSystemCallNo( script_h.readName() );
+    system_menu_mode = getSystemCallNo( script_h.readName_cstr() );
 
     //if (!rgosub_label)
         executeSystemCall();
@@ -491,7 +491,7 @@ int ONScripterLabel::strspCommand()
     if ( ai->image_surface && ai->visible )
         dirty_rect.add( ai->pos );
     ai->remove();
-    setStr(&ai->file_name, script_h.readStr());
+    setStr(&ai->file_name, script_h.readStr_cstr());
 
     Fontinfo fi;
     fi.is_newline_accepted = true;
@@ -510,7 +510,7 @@ int ONScripterLabel::strspCommand()
     char *buffer = script_h.getNext();
     while(script_h.getEndStatus() & ScriptHandler::END_COMMA){
         ai->num_of_cells++;
-        script_h.readStr();
+        script_h.readStr_cstr();
     }
     if (ai->num_of_cells == 0){
         ai->num_of_cells = 1;
@@ -640,7 +640,7 @@ int ONScripterLabel::sp_rgb_gradationCommand()
 
 int ONScripterLabel::spstrCommand()
 {
-    decodeExbtnControl( script_h.readStr() );
+    decodeExbtnControl( script_h.readStr_cstr() );
 
     return RET_CONTINUE;
 }
@@ -665,10 +665,10 @@ int ONScripterLabel::spreloadCommand()
 
 int ONScripterLabel::splitCommand()
 {
-    script_h.readStr();
+    script_h.readStr_cstr();
     const char *save_buf = script_h.saveStringBuffer();
 
-    char delimiter = script_h.readStr()[0];
+    char delimiter = script_h.readStr_cstr()[0];
 
     char *token = new char[strlen(save_buf)+1];
     while( script_h.getEndStatus() & ScriptHandler::END_COMMA ){
@@ -776,7 +776,7 @@ int tryToLaunch(const char* command, const char* target)
 int ONScripterLabel::shellCommand()
 {
 #ifdef WIN32
-    const char *url = script_h.readStr();
+    const char *url = script_h.readStr_cstr();
     HMODULE shdll = LoadLibrary("shell32");
     if (shdll) {
         typedef HINSTANCE (WINAPI *SHELLEXECUTE)(HWND, LPCSTR, LPCSTR, LPCSTR,
@@ -790,12 +790,12 @@ int ONScripterLabel::shellCommand()
     }
     
 #elif defined MACOSX
-    ONSCocoa::open_url(script_h.readStr(), ONSCocoa::ENC_SJIS);
+    ONSCocoa::open_url(script_h.readStr_cstr(), ONSCocoa::ENC_SJIS);
 #elif defined LINUX
     // Linux/BSD/other Unixes don't provide standard APIs for this
     // kind of thing, but there are various things we can try.
     
-    const char *url = script_h.readStr();
+    const char *url = script_h.readStr_cstr();
     int status;
 
     // First up is xdg-open, the freedesktop solution that's becoming
@@ -882,11 +882,11 @@ void ONScripterLabel::setwindowCore()
     bool is_color = false;
     const char *buf;
     if (allow_color_type_only) {
-        buf = script_h.readColor(&is_color);
+        buf = script_h.readColor_cstr(&is_color);
         if (!is_color)
-            buf = script_h.readStr();
+            buf = script_h.readStr_cstr();
     } else {
-        buf = script_h.readStr();
+        buf = script_h.readStr_cstr();
         if ( buf[0] == '#' ) is_color = true;
     }
     dirty_rect.add( sentence_font_info.pos );
@@ -958,11 +958,11 @@ int ONScripterLabel::setwindow2Command()
     bool is_color = false;
     const char *buf;
     if (allow_color_type_only) {
-        buf = script_h.readColor(&is_color);
+        buf = script_h.readColor_cstr(&is_color);
         if (!is_color)
-            buf = script_h.readStr();
+            buf = script_h.readStr_cstr();
     } else {
-        buf = script_h.readStr();
+        buf = script_h.readStr_cstr();
         if ( buf[0] == '#' ) is_color = true;
     }
     if ( is_color ){
@@ -1019,7 +1019,7 @@ int ONScripterLabel::setcursorCommand()
     }
 
     int no = script_h.readInt();
-    script_h.readStr();
+    script_h.readStr_cstr();
     const char* buf = script_h.saveStringBuffer();
     int x = script_h.readInt();
     int y = script_h.readInt();
@@ -1069,7 +1069,7 @@ int ONScripterLabel::selectCommand()
     while(1){
         if ( script_h.getNext()[0] != 0x0a && comma_flag == true ){
 
-            const char *buf = script_h.readStr();
+            const char *buf = script_h.readStr_cstr();
             comma_flag = (script_h.getEndStatus() & ScriptHandler::END_COMMA);
             if ( select_mode != SELECT_NUM_MODE && !comma_flag )
                 errorAndExit( "select: missing comma." );
@@ -1081,7 +1081,7 @@ int ONScripterLabel::selectCommand()
 
             // Label part
             if (select_mode != SELECT_NUM_MODE){
-                script_h.readLabel();
+                script_h.readLabel_cstr();
                 setStr( &slink->label, script_h.getStringBuffer()+1 );
                 //printf("Select label %s\n", slink->label );
             }
@@ -1229,7 +1229,7 @@ int ONScripterLabel::savescreenshotCommand()
     else if ( script_h.isName( "savescreenshot2" ) ){
     }
 
-    const char *buf = script_h.readStr();
+    const char *buf = script_h.readStr_cstr();
     char filename[4096];
 
     const char *ext = strrchr( buf, '.' );
@@ -1288,7 +1288,7 @@ int ONScripterLabel::savegameCommand()
 
     const char* savestr = NULL;
     if (savegame2_flag)
-        savestr = script_h.readStr();
+        savestr = script_h.readStr_cstr();
 
     if ( no < 0 )
         errorAndExit("savegame: save number is less than 0.");
@@ -1429,7 +1429,7 @@ int ONScripterLabel::puttextCommand()
 {
     enterTextDisplayMode(false);
 
-    script_h.readStr();
+    script_h.readStr_cstr();
 
     string_buffer_offset = 0;
     if (script_h.getEndStatus() & ScriptHandler::END_1BYTE_CHAR)
@@ -1473,7 +1473,7 @@ int ONScripterLabel::prnumCommand()
         script_h.readInt();
         script_h.readInt();
         script_h.readInt();
-        script_h.readStr();
+        script_h.readStr_cstr();
         return RET_CONTINUE;
     }
 
@@ -1530,7 +1530,7 @@ int ONScripterLabel::playCommand()
     if ( script_h.isName( "playonce" ) )
         loop_flag = false;
 
-    const char *buf = script_h.readStr();
+    const char *buf = script_h.readStr_cstr();
     if ( buf[0] == '*' ){
         cd_play_loop_flag = loop_flag;
         int new_cd_track = atoi( buf + 1 );
@@ -1711,7 +1711,7 @@ int ONScripterLabel::mp3Command()
 
     music_play_loop_flag = loop_flag;
 
-    const char *buf = script_h.readStr();
+    const char *buf = script_h.readStr_cstr();
     if (buf[0] != '\0'){
         int tmp = music_volume;
         setStr(&music_file_name, buf);
@@ -1755,7 +1755,7 @@ int ONScripterLabel::movieCommand()
         mpegplay_flag = true;
     } else {
         if ( script_h.compareString( "stop" ) ){
-            script_h.readName();
+            script_h.readName_cstr();
             if (async_movie) stopMovie(async_movie);
             async_movie = NULL;
 
@@ -1763,7 +1763,7 @@ int ONScripterLabel::movieCommand()
         }
     }
 
-    script_h.readStr();
+    script_h.readStr_cstr();
     const char *save_buf = script_h.saveStringBuffer();
 
     if (mpegplay_flag) {
@@ -1780,7 +1780,7 @@ int ONScripterLabel::movieCommand()
     int x=0,y=0,w=0,h=0;
 
     while( script_h.getEndStatus() & ScriptHandler::END_COMMA ){
-        const char *param = script_h.readName();
+        const char *param = script_h.readName_cstr();
         if ( strcmp(param, "click") == 0 )
             movie_click_flag = true;
         else if ( strcmp(param, "loop") == 0 )
@@ -1827,7 +1827,7 @@ int ONScripterLabel::monocroCommand()
     leaveTextDisplayMode();
 
     if ( script_h.compareString( "off" ) ){
-        script_h.readName();
+        script_h.readName_cstr();
         monocro_flag = false;
     }
     else{
@@ -1857,10 +1857,10 @@ int ONScripterLabel::minimizewindowCommand()
 
 int ONScripterLabel::mesboxCommand()
 {
-    const char *buf = script_h.readStr();
+    const char *buf = script_h.readStr_cstr();
     char *msg = new char[strlen(buf)+1];
     sprintf(msg,"%s",buf);
-    const char *title = script_h.readStr();
+    const char *title = script_h.readStr_cstr();
 #if defined(MACOSX)
     //The OS X dialog box routines are crashing when in fullscreen mode,
     //so let's switch to windowed mode just in case
@@ -1990,7 +1990,7 @@ int ONScripterLabel::lsp2Command()
     sprite2_info[ no ].visible = v;
     sprite2_info[ no ].blending_mode = blend_mode;
     
-    const char *buf = script_h.readStr();
+    const char *buf = script_h.readStr_cstr();
     sprite2_info[ no ].setImageName( buf );
 
     sprite2_info[ no ].orig_pos.x = script_h.readInt();
@@ -2033,7 +2033,7 @@ int ONScripterLabel::lspCommand()
     if ( sprite_info[no].image_surface && sprite_info[no].visible )
         dirty_rect.add( sprite_info[no].pos );
 
-    const char *buf = script_h.readStr();
+    const char *buf = script_h.readStr_cstr();
     sprite_info[ no ].setImageName( buf );
 
     parseTaggedString( &sprite_info[ no ] );
@@ -2117,9 +2117,9 @@ int ONScripterLabel::loopbgmstopCommand()
 
 int ONScripterLabel::loopbgmCommand()
 {
-    const char *buf = script_h.readStr();
+    const char *buf = script_h.readStr_cstr();
     setStr( &loop_bgm_name[0], buf );
-    buf = script_h.readStr();
+    buf = script_h.readStr_cstr();
     setStr( &loop_bgm_name[1], buf );
 
     playSound(loop_bgm_name[1],
@@ -2146,7 +2146,7 @@ int ONScripterLabel::lookbackflushCommand()
 int ONScripterLabel::lookbackbuttonCommand()
 {
     for ( int i=0 ; i<4 ; i++ ){
-        const char *buf = script_h.readStr();
+        const char *buf = script_h.readStr_cstr();
         setStr( &lookback_info[i].image_name, buf );
         parseTaggedString( &lookback_info[i] );
         setupAnimationInfo( &lookback_info[i] );
@@ -2169,7 +2169,7 @@ int ONScripterLabel::logspCommand()
     if (si.image_surface && si.visible)
         dirty_rect.add( si.pos );
     si.remove();
-    setStr( &si.file_name, script_h.readStr() );
+    setStr( &si.file_name, script_h.readStr_cstr() );
 
     si.orig_pos.x = script_h.readInt();
     si.orig_pos.y = script_h.readInt();
@@ -2191,7 +2191,7 @@ int ONScripterLabel::logspCommand()
     char *current = script_h.getNext();
     int num = 0;
     while(script_h.getEndStatus() & ScriptHandler::END_COMMA){
-        script_h.readStr();
+        script_h.readStr_cstr();
         num++;
     }
 
@@ -2326,7 +2326,7 @@ int ONScripterLabel::ldCommand()
 {
     leaveTextDisplayMode();
 
-    char loc = script_h.readName()[0];
+    char loc = script_h.readName_cstr()[0];
     int no = -1;
     if      (loc == 'l') no = 0;
     else if (loc == 'c') no = 1;
@@ -2335,7 +2335,7 @@ int ONScripterLabel::ldCommand()
     const char *buf = NULL;
 
     if (no >= 0){
-        buf = script_h.readStr();
+        buf = script_h.readStr_cstr();
         if ( tachi_info[ no ].image_surface )
             dirty_rect.add( tachi_info[ no ].pos );
         tachi_info[ no ].setImageName( buf );
@@ -2378,7 +2378,7 @@ int ONScripterLabel::ldCommand()
 int ONScripterLabel::layermessageCommand()
 {
     int no = script_h.readInt();
-    const char *message = script_h.readStr();
+    const char *message = script_h.readStr_cstr();
 
 #ifdef NO_LAYER_EFFECTS
     printf("layermessage: layer effect support not available (%d,'%s')\n",
@@ -2402,7 +2402,7 @@ int ONScripterLabel::layermessageCommand()
 
 int ONScripterLabel::languageCommand()
 {
-    const char* which = script_h.readName();
+    const char* which = script_h.readName_cstr();
     if ( strcmp(which, "japanese") == 0 ){
         script_h.preferred_script = ScriptHandler::JAPANESE_SCRIPT;
     }
@@ -2491,14 +2491,14 @@ int ONScripterLabel::isdownCommand()
 
 int ONScripterLabel::inputCommand()
 {
-    script_h.readStr();
+    script_h.readStr_cstr();
 
     if ( script_h.current_variable.type != ScriptHandler::VAR_STR )
         errorAndExit( "input: no string variable." );
     int no = script_h.current_variable.var_no;
 
-    script_h.readStr(); // description
-    const char *buf = script_h.readStr(); // default value
+    script_h.readStr_cstr(); // description
+    const char *buf = script_h.readStr_cstr(); // default value
     setStr( &script_h.getVariableData(no).str, buf );
 
     printf( "*** inputCommand(): $%d is set to the default value: %s\n",
@@ -2526,7 +2526,7 @@ int ONScripterLabel::humanorderCommand()
 {
     leaveTextDisplayMode();
 
-    const char *buf = script_h.readStr();
+    const char *buf = script_h.readStr_cstr();
     int i;
     for (i=0 ; i<3 ; i++){
         if      (buf[i] == 'l') human_order[i] = 0;
@@ -2881,10 +2881,10 @@ int ONScripterLabel::getregCommand()
         errorAndExit( "getreg: no string variable." );
     int no = script_h.current_variable.var_no;
 
-    const char *buf = script_h.readStr();
+    const char *buf = script_h.readStr_cstr();
     char path[256], key[256];
     strcpy( path, buf );
-    buf = script_h.readStr();
+    buf = script_h.readStr_cstr();
     strcpy( key, buf );
 
     printf("  reading Registry file for [%s] %s\n", path, key );
@@ -2905,7 +2905,7 @@ int ONScripterLabel::getregCommand()
                 while( fgets( reg_buf2, 256, fp) ){
 
                     script_h.pushCurrent( reg_buf2 );
-                    buf = script_h.readStr();
+                    buf = script_h.readStr_cstr();
                     if ( strncmp( buf,
                                   key,
                                   (strlen(buf)>strlen(key))?strlen(buf):strlen(key) ) ){
@@ -2919,7 +2919,7 @@ int ONScripterLabel::getregCommand()
                     }
                     script_h.setCurrent(script_h.getNext()+1);
 
-                    buf = script_h.readStr();
+                    buf = script_h.readStr_cstr();
                     setStr( &script_h.getVariableData(no).str, buf );
                     script_h.popCurrent();
                     printf("  $%d = %s\n", no, script_h.getVariableData(no).str );
@@ -3189,7 +3189,7 @@ int ONScripterLabel::fileexistCommand()
 {
     script_h.readInt();
     script_h.pushVariable();
-    const char *buf = script_h.readStr();
+    const char *buf = script_h.readStr_cstr();
 
     int found = (script_h.cBR->getFileLength_cstr(buf)>0)?1:0;
     if (!found) {
@@ -3216,7 +3216,7 @@ int ONScripterLabel::fileexistCommand()
 
 int ONScripterLabel::exec_dllCommand()
 {
-    const char *buf = script_h.readStr();
+    const char *buf = script_h.readStr_cstr();
     char dll_name[256];
     unsigned int c=0;
     while(buf[c] && (buf[c] != '/')){
@@ -3298,7 +3298,7 @@ int ONScripterLabel::exbtnCommand()
 
         if ( (cellcheck_flag && (sprite_info[ sprite_no ].num_of_cells < 2)) ||
              (!cellcheck_flag && (sprite_info[ sprite_no ].num_of_cells == 0)) ){
-            script_h.readStr();
+            script_h.readStr_cstr();
             return RET_CONTINUE;
         }
 
@@ -3307,7 +3307,7 @@ int ONScripterLabel::exbtnCommand()
     }
     is_exbtn_enabled = true;
 
-    const char *buf = script_h.readStr();
+    const char *buf = script_h.readStr_cstr();
 
     button->button_type = ButtonLink::EX_SPRITE_BUTTON;
     button->sprite_no   = sprite_no;
@@ -3407,7 +3407,7 @@ int ONScripterLabel::dwaveCommand()
         Mix_PlayChannel(ch, wave_sample[ch], loop_flag?-1:0);
     }
     else{
-        const char *buf = script_h.readStr();
+        const char *buf = script_h.readStr_cstr();
         int fmt = SOUND_WAVE|SOUND_OGG;
         channel_preloaded[ch] = false;
         stopDWAVE(ch);
@@ -3754,7 +3754,7 @@ int ONScripterLabel::clCommand()
 {
     leaveTextDisplayMode();
 
-    char loc = script_h.readName()[0];
+    char loc = script_h.readName_cstr()[0];
 
     if ( loc == 'l' || loc == 'a' ){
         dirty_rect.add( tachi_info[0].pos );
@@ -3827,7 +3827,7 @@ int ONScripterLabel::checkkeyCommand()
          script_h.pushed_variable.type != ScriptHandler::VAR_ARRAY )
         errorAndExit( "checkpage: no integer variable." );
 
-    const char* buf = script_h.readStr();
+    const char* buf = script_h.readStr_cstr();
     if (!buf || (*buf == '\0')) {
         script_h.setInt( &script_h.pushed_variable, 0 );
         return RET_CONTINUE;
@@ -3911,7 +3911,7 @@ int ONScripterLabel::cellCommand()
 
 int ONScripterLabel::captionCommand()
 {
-    const char* buf = script_h.readStr();
+    const char* buf = script_h.readStr_cstr();
     size_t len = strlen(buf);
 
     char *buf2 = new char[len*2+3];
@@ -4120,10 +4120,10 @@ int ONScripterLabel::btndownCommand()
 int ONScripterLabel::btndefCommand()
 {
     if (script_h.compareString("clear")){
-        script_h.readName();
+        script_h.readName_cstr();
     }
     else{
-        const char *buf = script_h.readStr();
+        const char *buf = script_h.readStr_cstr();
 
         btndef_info.remove();
 
@@ -4327,20 +4327,20 @@ int ONScripterLabel::bgCommand()
     const char *buf;
     if (script_h.compareString("white")){
         buf = "white";
-        script_h.readName();
+        script_h.readName_cstr();
     }
     else if (script_h.compareString("black")){
         buf = "black";
-        script_h.readName();
+        script_h.readName_cstr();
     }
     else{
         if (allow_color_type_only) {
             bool is_color = false;
-            buf = script_h.readColor(&is_color);
+            buf = script_h.readColor_cstr(&is_color);
             if (!is_color)
-                buf = script_h.readStr();
+                buf = script_h.readStr_cstr();
         } else {
-            buf = script_h.readStr();
+            buf = script_h.readStr_cstr();
         }
     }
 
@@ -4414,7 +4414,7 @@ int ONScripterLabel::barCommand()
 
 int ONScripterLabel::aviCommand()
 {
-    script_h.readStr();
+    script_h.readStr_cstr();
     const char *save_buf = script_h.saveStringBuffer();
 
     bool click_flag = (script_h.readInt()==1)?true:false;

@@ -492,7 +492,7 @@ void ONScripterLabel::parseTaggedString( AnimationInfo *anim, bool is_mask )
 
     if ( anim->trans_mode == AnimationInfo::TRANS_STRING && buffer[0] == '$' ){
         script_h.pushCurrent( buffer );
-        setStr( &anim->file_name, script_h.readStr() );
+        setStr( &anim->file_name, script_h.readStr_cstr() );
         script_h.popCurrent();
     }
     else{

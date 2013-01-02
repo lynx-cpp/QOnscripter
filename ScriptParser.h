@@ -208,9 +208,9 @@ public:
     bool answer_dialog_with_yes_ok;// give 'yesnobox' and 'okcancelbox' 'yes/ok' results
     inline const char *readColorStr() {
         if (allow_color_type_only)
-            return script_h.readColor();
+            return script_h.readColor_cstr();
         else
-            return script_h.readStr();
+            return script_h.readStr_cstr();
     }
 protected:
     struct UserFuncLUT{

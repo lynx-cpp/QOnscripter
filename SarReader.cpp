@@ -187,11 +187,6 @@ int SarReader::getNumFiles(){
     return num;
 }
 
-int SarReader::getIndexFromFile_cstr( ArchiveInfo *ai, const char *file_name )
-{
-    return getIndexFromFile(ai, string(file_name));
-}
-
 int SarReader::getIndexFromFile(ArchiveInfo *ai, const string &file_name)
 {
     unsigned int i;
@@ -236,11 +231,6 @@ size_t SarReader::getFileLength(const string &file_name)
     }
 
     return info->fi_list[j].original_length;
-}
-
-size_t SarReader::getFileSub_cstr( ArchiveInfo *ai, const char *file_name, unsigned char *buf )
-{
-    return SarReader::getFileSub(ai, string(file_name), buf);
 }
 
 size_t SarReader::getFileSub(ArchiveInfo *ai, const string &file_name, unsigned char *buf)
