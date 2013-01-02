@@ -195,6 +195,7 @@ SDL_Surface *ONScripterLabel::createSurfaceFromFile(char *filename, int *locatio
 {
     char* alt_buffer = 0;
     unsigned long length = script_h.cBR->getFileLength_cstr( filename );
+//    std::cout << "---------- " << length << " ----------\n";
 
     if (length == 0) {
         alt_buffer = new char[strlen(filename) + strlen(script_h.save_path) + 1];
@@ -205,6 +206,7 @@ SDL_Surface *ONScripterLabel::createSurfaceFromFile(char *filename, int *locatio
         if (fp) {
             fseek(fp, 0, SEEK_END);
             length = ftell(fp);
+//            std::cout << "---------- " << length << " ----------\n";
             fclose(fp);
         }
         else delete[] alt_buffer;
@@ -240,6 +242,7 @@ SDL_Surface *ONScripterLabel::createSurfaceFromFile(char *filename, int *locatio
     if (length > tmp_image_buf_length){
         buffer = new(std::nothrow) unsigned char[length];
         if (buffer == NULL) {
+//            std::cout << "========== " << length << " ==========\n";
             snprintf(script_h.errbuf, MAX_ERRBUF_LEN,
                      "failed to load image file [%s] (%lu bytes)",
                      filename, length);

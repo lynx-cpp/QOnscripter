@@ -1,38 +1,3 @@
-/* -*- C++ -*-
- * 
- *  ScriptParser.h - Define block parser of ONScripter-EN
- *
- *  Copyright (c) 2001-2009 Ogapee. All rights reserved.
- *  (original ONScripter, of which this is a fork).
- *
- *  ogapee@aqua.dti2.ne.jp
- *
- *  Copyright (c) 2007-2010 "Uncle" Mion Sonozaki
- *
- *  UncleMion@gmail.com
- *
- *  This program is free software; you can redistribute it and/or modify
- *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation; either version 2 of the License, or
- *  (at your option) any later version.
- *
- *  This program is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU General Public License for more details.
- *
- *  You should have received a copy of the GNU General Public License
- *  along with this program; if not, see <http://www.gnu.org/licenses/>
- *  or write to the Free Software Foundation, Inc.,
- *  59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
- */
-
-// Modified by Haeleth, Autumn 2006, to better support OS X/Linux packaging;
-// and since then numerous other times (see SVN changelog for full details)
-
-// Modified by Mion of Sonozaki Futago-tachi, March 2008, to update from
-// Ogapee's 20080121 release source code.
-
 #ifndef __SCRIPT_PARSER_H__
 #define __SCRIPT_PARSER_H__
 
@@ -115,7 +80,8 @@ public:
     void setCurrentLabel( const char *label );
     void gosubReal( const char *label, char *next_script, bool textgosub_flag=false, int rgosub_state=CLICK_NONE, bool rgosub_1byte=false );
 
-    FILE *fopen(const char *path, const char *mode, const bool save = false, const bool usesavedir = false);
+    FILE *fopen(const std::string &path, const std::string &mode, const bool save = false, const bool usesavedir = false);
+    FILE *fopen_cstr(const char *path, const char *mode, const bool save = false, const bool usesavedir = false);
     void saveGlovalData(bool no_error=false);
     void setArchivePath(const char *path);
     void setSavePath(const char *path);

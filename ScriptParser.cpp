@@ -57,6 +57,8 @@
 
 #define MAX_PAGE_LIST 16
 
+using namespace std;
+
 typedef int (ScriptParser::*FuncList)();
 static struct FuncLUT{
     char command[30];
@@ -795,7 +797,7 @@ int ScriptParser::loadFileIOBuf( const char *filename )
     bool usesavedir = true;
     if (!strcmp( filename, "envdata" ))
         usesavedir = false;
-    if ( (fp = fopen( filename, "rb", true, usesavedir )) == NULL )
+    if ( (fp = fopen_cstr( filename, "rb", true, usesavedir )) == NULL )
         return -1;
     
     fseek(fp, 0, SEEK_END);
@@ -1099,40 +1101,36 @@ ScriptParser::EffectLink *ScriptParser::parseEffect(bool init_flag)
     return NULL;
 }
 
-FILE *ScriptParser::fopen( const char *path, const char *mode, const bool save, const bool usesavedir )
+FILE *ScriptParser::fopen_cstr( const char *path, const char *mode, const bool save, const bool usesavedir )
 {
-    const char* root;
-    char *file_name;
+    return ScriptParser::fopen(string(path), string(mode), save, usesavedir);
+}
+
+FILE *ScriptParser::fopen(const string &path, const string &mode, const bool save, const bool usesavedir)
+{
+    string root;
+    string file_name;
     FILE *fp = NULL;
 
     if (usesavedir && script_h.savedir) {
         root = script_h.savedir;
-        file_name = new char[strlen(root)+strlen(path)+1];
-        sprintf( file_name, "%s%s", root, path );
-        //printf("parser:fopen(\"%s\")\n", file_name);
+        file_name = root + path;
 
-        fp = ::fopen( file_name, mode );
+        fp = ::fopen( file_name.c_str(), mode.c_str() );
     } else if (save) {
         root = script_h.save_path;
-        file_name = new char[strlen(root)+strlen(path)+1];
-        sprintf( file_name, "%s%s", root, path );
-        //printf("parser:fopen(\"%s\")\n", file_name);
+        file_name = root + path;
 
-        fp = ::fopen( file_name, mode );
+        fp = ::fopen( file_name.c_str(), mode.c_str() );
     } else {
-        // search within archive_path dirs
-        file_name = new char[archive_path.max_path_len()+strlen(path)+1];
         for (int n=0; n<(archive_path.get_num_paths()); n++) {
             root = archive_path.get_path_cstr(n);
-            //printf("root: %s\n", root);
-            sprintf( file_name, "%s%s", root, path );
-            //printf("parser:fopen(\"%s\")\n", file_name);
-            fp = ::fopen( file_name, mode );
+            file_name = root + path;
+            fp = ::fopen( file_name.c_str(), mode.c_str() );
             if (fp != NULL) break;
         }
     }
 
-    delete[] file_name;
     return fp;
 }
 

@@ -329,7 +329,7 @@ int ONScripterLabel::playSound(const char *filename, int format, bool loop_flag,
         !(IS_MIDI_HDR(buffer) && (format & SOUND_SEQMUSIC))){ //bypass MIDIs
         if (music_cmd){
             FILE *fp;
-            if ( (fp = fopen(TMP_MUSIC_FILE, "wb", true)) == NULL){
+            if ( (fp = fopen_cstr(TMP_MUSIC_FILE, "wb", true)) == NULL){
                 snprintf(script_h.errbuf, MAX_ERRBUF_LEN,
                          "can't open temporary music file %s", TMP_MUSIC_FILE);
                 errorAndCont(script_h.errbuf);
@@ -378,7 +378,7 @@ int ONScripterLabel::playSound(const char *filename, int format, bool loop_flag,
 
     if (format & SOUND_SEQMUSIC){
         FILE *fp;
-        if ( (fp = fopen(TMP_SEQMUSIC_FILE, "wb", true)) == NULL){
+        if ( (fp = fopen_cstr(TMP_SEQMUSIC_FILE, "wb", true)) == NULL){
             snprintf(script_h.errbuf, MAX_ERRBUF_LEN,
                      "can't open temporary music file %s", TMP_SEQMUSIC_FILE);
             errorAndCont(script_h.errbuf);

@@ -2,7 +2,6 @@
 #define __SAR_READER_H__
 
 #include "DirectReader.h"
-#include <cstring>
 #include <string>
 
 class SarReader : public DirectReader

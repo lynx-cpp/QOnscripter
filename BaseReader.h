@@ -35,7 +35,7 @@ struct BaseReader
 
     struct FileInfo{
         std::string name;
-        char name_cstr[256];
+//        char name_cstr[256];
         int  compression_type;
         size_t offset;
         size_t length;
@@ -44,8 +44,8 @@ struct BaseReader
         : compression_type(NO_COMPRESSION),
           offset(0), length(0), original_length(0) {
 //              name.resize(256);
-            for (int i = 0; i < 256; i++)
-                name_cstr[i] = '\0';
+//            for (int i = 0; i < 256; i++)
+//                name_cstr[i] = '\0';
           }
     };
 
@@ -54,18 +54,16 @@ struct BaseReader
         FILE *file_handle;
         int power_resume_number; // currently only for PSP
         std::string file_name;
-        char *file_name_cstr; //assumed to use SJIS encoding
         struct FileInfo *fi_list;
         unsigned int num_of_files;
         unsigned long base_offset;
 
         ArchiveInfo()
-        : next(NULL), file_handle(NULL), file_name_cstr(NULL),
+        : next(NULL), file_handle(NULL),
           fi_list(NULL), num_of_files(0), base_offset(0)
         {}
         ~ArchiveInfo(){
             if (file_handle) fclose( file_handle );
-            if (file_name_cstr) delete[] file_name_cstr;
             if (fi_list) delete[] fi_list;
         }
     };

@@ -141,13 +141,11 @@ unsigned long DirectReader::swapLong( unsigned long ch )
 
 int DirectReader::open( const string &name )
 {
-    cout << "calling open()\n";
     return 0;
 }
 
 int DirectReader::open_cstr( const char *name )
 {
-    cout << "calling open_cstr()\n";
     return 0;
 }
 
@@ -184,7 +182,7 @@ void DirectReader::registerCompressionType(const string &ext, int type)
     
 int DirectReader::getRegisteredCompressionType_cstr( const char *file_name )
 {
-    getRegisteredCompressionType(string(file_name));
+    return getRegisteredCompressionType(string(file_name));
 }
 
 int DirectReader::getRegisteredCompressionType(const string &file_name)
@@ -199,7 +197,7 @@ int DirectReader::getRegisteredCompressionType(const string &file_name)
     
     RegisteredCompressionType *reg = root_registered_compression_type.next;
     while (reg){
-        if (capital_name != reg->ext) return reg->type;
+        if (capital_name == reg->ext) return reg->type;
         reg = reg->next;
     }
 
@@ -258,8 +256,7 @@ size_t DirectReader::getFileLength(const string &file_name)
     return len;
 }
 
-size_t DirectReader::getFile_cstr( const char *file_name, unsigned char *buffer,
-                              int *location )
+size_t DirectReader::getFile_cstr( const char *file_name, unsigned char *buffer, int *location )
 {
     return DirectReader::getFile(string(file_name), buffer, location);
 }
@@ -326,7 +323,9 @@ void DirectReader::convertFromSJISToEUC( char *buf )
     }
 }
 
-void DirectReader::convertFromSJISToUTF8( char *dst_buf, char *src_buf ) { }
+void DirectReader::convertFromSJISToUTF8( char *dst_buf, char *src_buf )
+{
+}
 
 size_t DirectReader::decodeNBZ( FILE *fp, size_t offset, unsigned char *buf )
 {
@@ -357,6 +356,7 @@ size_t DirectReader::decodeNBZ( FILE *fp, size_t offset, unsigned char *buf )
 }
 
 #ifdef TOOLS_BUILD
+int a[-1] = {};
 
 size_t DirectReader::encodeNBZ( FILE *fp, size_t length, unsigned char *buf )
 {
@@ -550,6 +550,7 @@ size_t DirectReader::getDecompressedFileLength( int type, FILE *fp, size_t offse
             
         length = (width * 3 +width_pad) * height + 54;
     }
+
 
     return length;
 }

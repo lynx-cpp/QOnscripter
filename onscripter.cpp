@@ -39,9 +39,6 @@ static void optionHelp()
     printf( "Usage: onscripter [option ...]\n" );
     printf( "      --cdaudio\t\tuse CD audio if available\n");
     printf( "      --cdnumber no\tchoose the CD-ROM drive number\n");
-#ifdef WIN32
-    printf( "      --waveout-audio\tuse the Windows waveout audio driver (instead of Direct Sound)\n");
-#endif
     printf( "      --match-audiodevice-to-bgm\treset audio to match bgm specs\n");
     printf( "      --nomatch-audiodevice-to-bgm\tdon't reset audio to match bgm specs (default)\n");
     printf( "  -f, --font file\tset a TTF font file\n");
@@ -51,44 +48,20 @@ static void optionHelp()
     printf( "      --japanese\tset preferred text mode to Japanese\n");
     printf( "      --english-menu\tuse English system menu messages (default)\n");
     printf( "      --japanese-menu\tuse Japanese system menu messages\n");
-#if   defined WIN32
-    printf( "  -r, --root path\tset the root path to the archives\n");
-    printf( "  -s, --save path\tset the path to use for saved games (default: folder in All Users profile)\n");
-    printf( "      --current-user-appdata\tuse the current user's AppData folder instead of AllUsers' AppData\n");
-#elif defined MACOSX
-    printf( "  -r, --root path\tset the root path to the archives (default: Resources in ONScripter bundle)\n");
-    printf( "  -s, --save path\tset the path to use for saved games (default: folder in ~/Library/Application Support)\n");
-#elif defined LINUX
-    printf( "  -r, --root path\tset the root path to the archives\n");
-    printf( "  -s, --save path\tset the path to use for saved games (default: hidden subdirectory in ~)\n");
-#else
     printf( "  -r, --root path\tset the root path to the archives\n");
     printf( "  -s, --save path\tset the path to use for saved games (default: same as root path)\n");
-#endif
     printf( "      --use-app-icons\tuse the icns for the current application, if bundled/embedded\n");
     printf( "      --gameid id\t\tset game identifier (like with game.id)\n");
-#ifndef NO_LAYER_EFFECTS
     printf( "      --no-layers\tignore layer-based cmds\n");
-#endif
     printf( "      --fullscreen\tstart in fullscreen mode\n");
     printf( "      --window\t\tstart in window mode\n");
-#ifndef PDA
     printf( "      --window-width width\t\tset preferred window width\n");
-#endif
-#ifdef RCA_SCALE
-    printf( "      --widescreen\ttransform game to match widescreen monitors\n");
-#endif
     printf( "      --scale\t\tscale game to native display size. Yields small sharp text.\n");
     printf( "      --no-movie-upscale\t\tdon't resize a movie larger than its native size.\n");
     printf( "      --force-png-alpha\t\talways use PNG alpha channels\n");
     printf( "      --force-png-nscmask\talways use NScripter-style masks\n");
     printf( "      --detect-png-nscmask\tdetect PNG alpha images that actually use masks\n");
     printf( "      --force-button-shortcut\tignore useescspc and getenter command\n");
-#ifdef USE_X86_GFX
-    printf( "      --disable-cpu-gfx\tdo not use MMX/SSE2 graphics acceleration routines\n");
-#elif  USE_PPC_GFX
-    printf( "      --disable-cpu-gfx\tdo not use Altivec graphics acceleration routines\n");
-#endif
     printf( "      --automode-time time\tdefault time at clickwaits before continuing, when in automode\n");
     printf( "      --enable-wheeldown-advance\tadvance the text on mouse wheeldown event\n");
     printf( "      --disable-rescale\tdo not rescale the images in the archives when compiled with -DPDA\n");
@@ -112,11 +85,7 @@ static void optionHelp()
 
 static void optionVersion()
 {
-#ifdef ONS_CODENAME
     printf("ONScripter-EN version %s '%s' (%d.%02d)\n", ONS_VERSION, ONS_CODENAME, NSC_VERSION/100, NSC_VERSION%100 );
-#else
-    printf("ONScripter-EN version %s (%d.%02d)\n", ONS_VERSION, NSC_VERSION/100, NSC_VERSION%100 );
-#endif
     printf("Original written by Ogapee <ogapee@aqua.dti2.ne.jp>,\n");
     printf("English fork maintained by \"Uncle\" Mion Sonozaki <UncleMion@gmail.com>\n\n");
     printf("Copyright (c) 2001-2011 Ogapee, 2007-2011 Sonozaki\n");
@@ -143,11 +112,6 @@ static void parseOptions(int argc, char **argv, ONScripterLabel &ons, bool &hasA
                 argv++;
                 ons.setCDNumber(atoi(argv[0]));
             }
-#ifdef WIN32
-            else if ( !strcmp( argv[0]+1, "-waveout-audio" ) ){
-                ons.setAudiodriver("waveout");
-            }
-#endif
             else if ( !strcmp( argv[0]+1, "-audiodriver" ) ){
                 argc--;
                 argv++;
@@ -202,11 +166,6 @@ static void parseOptions(int argc, char **argv, ONScripterLabel &ons, bool &hasA
                 argv++;
                 ons.setSavePath(argv[0]);
             }
-#ifdef WIN32
-            else if ( !strcmp( argv[0]+1, "-current-user-appdata" ) ){
-                ons.setUserAppData();
-            }
-#endif
             else if ( !strcmp( argv[0]+1, "-use-app-icons" ) ){
                 ons.setUseAppIcons();
             }
@@ -226,11 +185,9 @@ static void parseOptions(int argc, char **argv, ONScripterLabel &ons, bool &hasA
                 argv++;
                 ons.setPreferredWidth(argv[0]);
             }
-#ifndef NO_LAYER_EFFECTS
             else if ( !strcmp( argv[0]+1, "-no-layers" ) ){
                 ons.setNoLayers();
             }
-#endif
             else if ( !strcmp( argv[0]+1, "-gameid" ) ){
                 argc--;
                 argv++;
@@ -255,12 +212,6 @@ static void parseOptions(int argc, char **argv, ONScripterLabel &ons, bool &hasA
             else if ( !strcmp( argv[0]+1, "-debug" ) ){
                 ons.add_debug_level();
             }
-#if defined (USE_X86_GFX) || defined(USE_PPC_GFX)
-            else if ( !strcmp( argv[0]+1, "-disable-cpu-gfx" ) ){
-                ons.disableCpuGfx();
-                printf("disabling CPU accelerated graphics routines\n");
-            }
-#endif
             else if ( !strcmp( argv[0]+1, "-disable-rescale" ) ){
                 ons.disableRescale();
             }
@@ -290,11 +241,6 @@ static void parseOptions(int argc, char **argv, ONScripterLabel &ons, bool &hasA
                 argv++;
                 ons.setKeyEXE(argv[0]);
             }
-#ifdef RCA_SCALE
-            else if ( !strcmp( argv[0]+1, "-widescreen" ) ){
-                ons.setWidescreen();
-            }
-#endif
             else if ( !strcmp( argv[0]+1, "-scale" ) ){
                 ons.setScaled();
             }
